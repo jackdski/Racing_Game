@@ -52,7 +52,7 @@
 #define configUSE_TIMERS                1
 #define configTIMER_TASK_PRIORITY       ( 3 )
 #define configTIMER_QUEUE_LENGTH        5
-#define configTIMER_TASK_STACK_DEPTH    ( 200 )
+#define configTIMER_TASK_STACK_DEPTH    ( 250 )
 
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */

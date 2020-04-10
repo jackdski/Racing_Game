@@ -9,6 +9,7 @@
 #define SRC_LCD_DISPLAY_H_
 
 #include "configurations.h"
+#include "high_score.h"
 #include "glib.h"
 
 /*  F R E E R T O S   I N C L U D E S   */
@@ -110,8 +111,8 @@ void gameover_print_header(void);
 void gameover_print_header_inverse(void);
 
 /* high score */
-void high_score_display(void);
-void high_score_display_place(uint8_t place);
+void high_score_display(High_Score_List_t list);
+void high_score_display_place(uint8_t place, uint32_t score);
 
 
 #endif /* SRC_LCD_DISPLAY_H_ */

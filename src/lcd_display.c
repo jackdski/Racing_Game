@@ -21,6 +21,7 @@
 #include "glib.h"
 
 #include "tracks.h"
+#include "high_score.h"
 
 /*  G L O B A L   V A R I A B L E S   */
 extern eSystemState 	system_state;
@@ -30,6 +31,7 @@ extern Speed_t 			Vehicle_Speed;
 extern Direction_t 		Vehicle_Direction;
 extern Track_t 			track;
 extern Track_Settings_t track_settings;
+extern High_Score_List_t high_scores;
 
 /*	S E M A P H O R E S   */
 extern SemaphoreHandle_t mSpeedData;
@@ -104,15 +106,11 @@ void DisplayTask(void * pvParameters) {
 
 		switch(sys_state) {
 			case(Startup): {
-				static bool written = false;
-				if(written == false) {
-					startup_screen();
-					DMD_updateDisplay();
+				startup_screen();
+				DMD_updateDisplay();
 
-					if(xTimerIsTimerActive(startup_timer) == pdFALSE) {
-						xTimerStart(startup_timer, 10);
-					}
-					written = true;
+				if(xTimerIsTimerActive(startup_timer) == pdFALSE) {
+					xTimerStart(startup_timer, 10);
 				}
 				break;
 			}
@@ -140,7 +138,7 @@ void DisplayTask(void * pvParameters) {
 							// calculate the vehicle model
 							xSemaphoreTake(mVehicleData, 10);
 							gameplay_calculate_vehicle_shape(vehicle, &vehicle_shape_graphic);
-							vehicle_x_position = CENTER_X - (vehicle.width / 2);
+							vehicle_x_position = CENTER_X - (vehicle.characteristics.width / 2);
 							xSemaphoreGive(mVehicleData);
 
 							xSemaphoreTake(mTrack, 10);
@@ -152,6 +150,8 @@ void DisplayTask(void * pvParameters) {
 							xSemaphoreTake(mSystemState, 10);
 							system_state = GetReady;
 							xSemaphoreGive(mSystemState);
+
+							written = false; // reset value
 							break;
 						}
 						case(LCD_CONFIG_TYPE_NEXT): {
@@ -202,7 +202,13 @@ void DisplayTask(void * pvParameters) {
 					system_state = Gameplay;
 					sys_state = system_state;
 					xSemaphoreGive(mSystemState);
+
+					xSemaphoreTake(mTrack, 10);
+					track.index = 0;
+					xSemaphoreGive(mTrack);
+
 					vTaskResume(thVehMon);
+					start_high_score_timer();
 				}
 				break;
 			}
@@ -245,6 +251,8 @@ void DisplayTask(void * pvParameters) {
 				break;
 			}
 			case(GameOver): {
+				stop_high_score_timer();
+
 				static bool inverse = false;
 				if(inverse == true) {
 					gameover_print_header_inverse();
@@ -264,6 +272,19 @@ void DisplayTask(void * pvParameters) {
 				uint32_t notification_value;
 				if(xTaskNotifyWait(ULONG_MAX, ULONG_MAX, &notification_value, 0) == pdTRUE) {
 					if(notification_value == LCD_GAMEOVER_NEXT) {
+						// add info to High Score Board
+						xSemaphoreTake(mSpeedData, 5);
+						uint32_t max_speed = Vehicle_Speed.max_speed;
+						xSemaphoreGive(mSpeedData);
+
+						xSemaphoreTake(mVehicleData, 5);
+						uint32_t distance = vehicle.distance_covered;
+						xSemaphoreGive(mVehicleData);
+
+						uint32_t new_score = calculate_score(max_speed, distance, get_high_score_timer_value());
+						high_score_add(&high_scores, new_score);
+
+						// change state to HighScore
 						xSemaphoreTake(mSystemState, 10);
 						system_state = HighScore;
 						sys_state = system_state;
@@ -275,7 +296,7 @@ void DisplayTask(void * pvParameters) {
 			}
 			case(HighScore): {
 				// Display High Score data
-				high_score_display();
+				high_score_display(high_scores);
 				DMD_updateDisplay();
 
 				// start timer
@@ -288,7 +309,7 @@ void DisplayTask(void * pvParameters) {
 				xTaskNotifyWait(ULONG_MAX, ULONG_MAX, &notification_value, portMAX_DELAY);
 				if(notification_value == LCD_HIGHSCORE_RESET) {
 					xSemaphoreTake(mSystemState, 10);
-					system_state = Configuration;
+					system_state = Startup;
 					sys_state = system_state;
 					xSemaphoreGive(mSystemState);
 				}
@@ -398,7 +419,6 @@ void config_write_car_type(eCarType carType) {
 			case(Sedan): snprintf(str, DISPLAY_MAX_STR_LEN, SEDAN_STR); break;
 			case(SUV): snprintf(str, DISPLAY_MAX_STR_LEN, SUV_STR); break;
 			case(Truck): snprintf(str, DISPLAY_MAX_STR_LEN, TRUCK_STR); break;
-			case(Van): snprintf(str, DISPLAY_MAX_STR_LEN, VAN_STR); break;
 			case(F1): snprintf(str, DISPLAY_MAX_STR_LEN, F1_STR); break;
 		}
 
@@ -508,7 +528,7 @@ void config_update(Vehicle_t veh, Track_Settings_t settings, eDotSelect dot_pos)
 
 	config_write_track_type(settings.track);
 	config_write_car_type(veh.car_type);
-	config_write_tire_type(veh.tire_type);
+	config_write_tire_type(veh.tires.tire_type);
 	config_write_weather_type(veh.weather);
 	config_write_road_type(veh.road_type);
 }
@@ -574,35 +594,15 @@ void decrement_track_choice(Track_Settings_t * settings) {
 void increment_car_choice(Vehicle_t * veh) {
 	switch(veh->car_type) {
 	case(Sedan): {
-		veh->car_type	= SUV;
-		veh->length		= SUV_LENGTH;
-		veh->width		= SUV_WIDTH;
-		veh->mass		= SUV_MASS;
-		veh->max_power	= SUV_MAX_POWER;
+		vehicle_change_settings(veh, SUV);
 		break;
 	}
 	case(SUV): {
-		veh->car_type	= Truck;
-		veh->length		= TRUCK_LENGTH;
-		veh->width		= TRUCK_WIDTH;
-		veh->mass 		= TRUCK_MASS;
-		veh->max_power 	= TRUCK_MAX_POWER;
+		vehicle_change_settings(veh, Truck);
 		break;
 	}
 	case(Truck): {
-		veh->car_type	= Van;
-		veh->length 	= VAN_LENGTH;
-		veh->width		= VAN_WIDTH;
-		veh->mass		= VAN_MASS;
-		veh->max_power	= VAN_MAX_POWER;
-		break;
-	}
-	case(Van): {
-		veh->car_type	= F1;
-		veh->length		= F1_LENGTH;
-		veh->width		= F1_WIDTH;
-		veh->mass		= F1_MASS;
-		veh->max_power	= F1_MAX_POWER;
+		vehicle_change_settings(veh, F1);
 		break;
 	}
 	default: break;
@@ -612,35 +612,15 @@ void increment_car_choice(Vehicle_t * veh) {
 void decrement_car_choice(Vehicle_t * veh) {
 	switch(veh->car_type) {
 	case(SUV): {
-		veh->car_type	= Sedan;
-		veh->length		= SEDAN_LENGTH;
-		veh->width 		= SEDAN_WIDTH;
-		veh->mass 		= SEDAN_MASS;
-		veh->max_power	= SEDAN_MAX_POWER;
+		vehicle_change_settings(veh, Sedan);
 		break;
 	}
 	case(Truck): {
-		veh->car_type	= SUV;
-		veh->length		= SUV_LENGTH;
-		veh->width		= SUV_WIDTH;
-		veh->mass		= SUV_MASS;
-		veh->max_power	= SUV_MAX_POWER;
-		break;
-	}
-	case(Van): {
-		veh->car_type 	= Truck;
-		veh->length		= TRUCK_LENGTH;
-		veh->width		= TRUCK_WIDTH;
-		veh->mass 		= TRUCK_MASS;
-		veh->max_power	= TRUCK_MAX_POWER;
+		vehicle_change_settings(veh, SUV);
 		break;
 	}
 	case(F1): {
-		veh->car_type	= Van;
-		veh->length		= VAN_LENGTH;
-		veh->width		= VAN_WIDTH;
-		veh->mass 		= VAN_MASS;
-		veh->max_power	= VAN_MAX_POWER;
+		vehicle_change_settings(veh, Truck);
 		break;
 	}
 	default: break;
@@ -649,17 +629,17 @@ void decrement_car_choice(Vehicle_t * veh) {
 
 /* Tire Selection */
 void increment_tire_choice(Vehicle_t * veh) {
-	switch(veh->tire_type) {
-	case(Normal): veh->tire_type = Slicks; break;
-	case(Slicks): veh->tire_type = Snow_Tires; break;
+	switch(veh->tires.tire_type) {
+	case(Normal):		veh->tires.tire_type = Slicks; break;
+	case(Slicks):		veh->tires.tire_type = Snow_Tires; break;
 	default: break;
 	}
 }
 
 void decrement_tire_choice(Vehicle_t * veh) {
-	switch(veh->tire_type) {
-	case(Slicks): 		veh->tire_type = Normal; break;
-	case(Snow_Tires): 	veh->tire_type = Slicks; break;
+	switch(veh->tires.tire_type) {
+	case(Slicks): 		veh->tires.tire_type = Normal; break;
+	case(Snow_Tires):	veh->tires.tire_type = Slicks; break;
 	default: break;
 	}
 }
@@ -865,10 +845,10 @@ void gameplay_draw_vehicle(GLIB_Rectangle_t veh_shape, Direction_t veh_dir) {
 }
 
 void gameplay_calculate_vehicle_shape(Vehicle_t veh, GLIB_Rectangle_t * veh_shape) {
-	veh_shape->xMax = (int32_t)veh.width;
+	veh_shape->xMax = (int32_t)veh.characteristics.width;
 	veh_shape->xMin = vehicle_x_position - 1;
 	veh_shape->yMin = MAX_Y - 1;
-	veh_shape->yMax = veh_shape->yMin - veh.length;
+	veh_shape->yMax = veh_shape->yMin - veh.characteristics.length;
 }
 
 
@@ -1037,7 +1017,7 @@ void gameover_print_header_inverse(void) {
 //***********************************************************************************
 // highscore
 //***********************************************************************************
-void high_score_display(void) {
+void high_score_display(High_Score_List_t list) {
 	glibContext.backgroundColor = White;
 	glibContext.foregroundColor = Black;
 
@@ -1075,16 +1055,15 @@ void high_score_display(void) {
 
 	// display high scores
 	uint8_t i;
-	for(i = 5; i < 15; i++) {
-		high_score_display_place(i);
+	for(i = 0; i < list.num_entries; i++) {
+		high_score_display_place(i + 1, list.best_time[i]);
 	}
-
 }
 
-void high_score_display_place(uint8_t place) {
+void high_score_display_place(uint8_t place, uint32_t score) {
 	char str[DISPLAY_MAX_STR_LEN];
 	char str_place[3];
-	__itoa(place - 4, str_place, 10);
+	__itoa(place, str_place, 10);
 
 	strcat(str_place, ":");
 
@@ -1094,14 +1073,17 @@ void high_score_display_place(uint8_t place) {
 				  str,
 				  strlen(str),
 				  MIN_X + 10,
-				  (place * GLIB_FONT_HEIGHT),
+				  ((place + 5) * GLIB_FONT_HEIGHT),
 				  0);
 
-	snprintf(str, DISPLAY_MAX_STR_LEN, "90");
+	char str_score[5];
+	__itoa(score, str_score, 10);	// base 10
+
+	snprintf(str, DISPLAY_MAX_STR_LEN, str_score);
 	GLIB_drawString(&glibContext,
 				  str,
 				  strlen(str),
 				  MAX_X - 50,
-				  (place * GLIB_FONT_HEIGHT),
+				  ((place + 5) * GLIB_FONT_HEIGHT),
 				  0);
 }

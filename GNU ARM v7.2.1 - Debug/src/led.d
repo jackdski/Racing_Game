@@ -74,8 +74,11 @@ src/led.o: ../src/led.c ../src/led.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/mpu_wrappers.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/list.h \
+ ../src/monitor.h ../src/speed.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/semphr.h \
- /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/queue.h
+ /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/queue.h \
+ /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/timers.h \
+ /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h
 
 ../src/led.h:
 
@@ -229,6 +232,14 @@ src/led.o: ../src/led.c ../src/led.h \
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/list.h:
 
+../src/monitor.h:
+
+../src/speed.h:
+
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/semphr.h:
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/queue.h:
+
+/home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/timers.h:
+
+/home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h:

@@ -62,7 +62,9 @@ src/tracks.o: ../src/tracks.c ../src/tracks.h ../src/configurations.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/portable.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/deprecated_definitions.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h \
- /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/mpu_wrappers.h
+ /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/mpu_wrappers.h \
+ /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h \
+ /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/list.h
 
 ../src/tracks.h:
 
@@ -195,3 +197,7 @@ src/tracks.o: ../src/tracks.c ../src/tracks.h ../src/configurations.h \
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h:
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/mpu_wrappers.h:
+
+/home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h:
+
+/home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/list.h:

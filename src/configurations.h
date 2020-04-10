@@ -9,6 +9,8 @@
 #ifndef SRC_CONFIGURATIONS_H_
 #define SRC_CONFIGURATIONS_H_
 
+#include "FreeRTOS.h"
+#include "task.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -115,14 +117,20 @@
 
 /* Cd DRAG COEFFICIENT VALUES */
 #define SEDAN_CD				0.23
-#define SUB_CD					0.23
+#define SUV_CD					0.23
 #define TRUCK_CD				0.30
 
 /* CROSS-SECTIONAL AREA */ 		// TODO
-#define SEDAN_CS_AREA			2
+#define SEDAN_CS_AREA			2.0
+#define SUV_CS_AREA				2.5
+#define TRUCK_CS_AREA			2.75
+#define F1_CS_AREA				1.75
 
 /* MAX BRAKING FORCE */ 		// TODO
 #define SEDAN_BRAKE_FORCE		14000.0
+#define SUV_BRAKE_FORCE			16000.0
+#define TRUCK_BRAKE_FORCE		17000.0
+#define F1_BRAKE_FORCE			19000.0
 
 /* TASK NOTFICATION VALUES */
 #define LCD_CONFIG_TYPE_NEXT	0xAA
@@ -135,6 +143,7 @@
 #define LCD_HIGHSCORE_RESET		0xFEDCAB1
 
 #define MONITOR_GAMEOVER		0x87654321
+
 
 /* E N U M S */
 typedef enum {
@@ -179,10 +188,7 @@ typedef enum {
 	Sedan,
 	SUV,
 	Truck,
-	Van,
-	F1,
-//	CyberTruck,
-//	Semi
+	F1
 } eCarType;
 
 typedef enum {
@@ -233,6 +239,7 @@ typedef struct {
 // Vehicle-related
 
 typedef struct {
+	float drag_coefficient;
 	float drag_force;
 	float static_friction_force;
 	float rolling_friction_force;
@@ -246,6 +253,16 @@ typedef struct {
 } Vehicle_Shape_t;
 
 typedef struct {
+	uint16_t width;			// [cm]
+	uint16_t length;  		// [cm]
+	uint16_t turn_radius;  	// [m]
+	uint16_t cross_sectional_area;
+	float mass;				// [kg]
+	float max_power;
+	float brake_force;
+} Characteristics_t;
+
+typedef struct {
 	eTires tire_type;
 	float static_frict_coef;
 	float rolling_frict_coef;
@@ -253,8 +270,9 @@ typedef struct {
 
 typedef struct {
 	uint32_t speed;
+	uint32_t max_speed;
 	float accelerator_pos;	// [0:100]
-	// bool brakes_applied;
+	bool brakes_applied;
 } Speed_t;
 
 typedef struct {
@@ -268,22 +286,15 @@ typedef struct {
 	eCarType car_type;
 	eWeather weather;
 	eRoadType road_type;
-	eTires tire_type;
 	Tires_t tires;
-	float mass;				// [kg]
-	uint16_t width;			// [cm]
-	uint16_t length;  		// [cm]
-	uint16_t turn_radius;  	// [m]
-	float max_power;
-	uint16_t cross_sectional_area;
-	float drag_coefficient;
 	Forces_t forces;
-
-	uint32_t distance_covered;
+	Characteristics_t characteristics;
 	Vehicle_Shape_t shape;
+	uint32_t distance_covered;
 } Vehicle_t;
 
 void vehicle_init(Vehicle_t * veh);
+void vehicle_change_settings(Vehicle_t * veh, eCarType car_type);
 void vehicle_speed_init(Speed_t * veh_speed);
 void vehicle_direction_init(Direction_t * veh_dir);
 void track_settings_init(Track_Settings_t * settings);

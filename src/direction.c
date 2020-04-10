@@ -102,6 +102,11 @@ void DirectionTask(void * pvParameters) {
 				break;
 			}
 			case(GameOver): {
+				xSemaphoreTake(mDirectionData, 10); 		// get mutex
+				Vehicle_Direction.direction = Straight;
+				Vehicle_Direction.position = 0;
+				Vehicle_Direction.angle = 0;
+				xSemaphoreGive(mDirectionData);  			// release mutex
 				break;
 			}
 			case(HighScore): {

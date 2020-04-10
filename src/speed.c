@@ -158,7 +158,6 @@ void SpeedTask(void * pvParameters) {
 						if(xSemaphoreTake(mSpeedData, 10) == pdPASS) {
 							if(Vehicle_Speed.accelerator_pos - ACCELERATOR_CHANGE >= ACCELERATOR_MIN_POS) {
 								Vehicle_Speed.accelerator_pos -= ACCELERATOR_CHANGE;
-//								Vehicle_Speed.speed = calc_new_speed(veh, Vehicle_Speed);
 							}
 							else {
 								Vehicle_Speed.accelerator_pos = ACCELERATOR_MIN_POS;
@@ -176,6 +175,18 @@ void SpeedTask(void * pvParameters) {
 				break;
 			}
 			case(HighScore): {
+				// reset vspeed alues
+				xSemaphoreTake(mSpeedData, 10);
+				Vehicle_Speed.accelerator_pos = 0;
+				Vehicle_Speed.brakes_applied = false;
+				Vehicle_Speed.max_speed = 0;
+				Vehicle_Speed.speed = 0;
+				xSemaphoreGive(mSpeedData);
+
+				xSemaphoreTake(mVehicleData, 10);
+				vehicle.distance_covered = 0;
+				xSemaphoreGive(mVehicleData);
+
 				// send notification if both buttons pressed for 1s
 				switch(find_press_type(button_zero_state, button_one_state)) {
 					case(Double_Press): {
@@ -237,6 +248,12 @@ void tmrAccelDistanceCallback(TimerHandle_t xTimer) {
 	xSemaphoreTake(mSpeedData, 10);
 	calculate_distance_update(&vehicle, Vehicle_Speed, DISTANCE_UPDATE_GAMEPLAY);
 	Vehicle_Speed.speed = calc_new_speed(vehicle, Vehicle_Speed);
+
+	// keep track of Max Speed stat
+	if(Vehicle_Speed.speed > Vehicle_Speed.max_speed) {
+		Vehicle_Speed.max_speed = Vehicle_Speed.speed;
+	}
+
 	xSemaphoreGive(mVehicleData);
 	xSemaphoreGive(mSpeedData);
 }
@@ -248,7 +265,7 @@ void tmrAccelDistanceCallback(TimerHandle_t xTimer) {
 //void calc_new_speed(ePressType change_direction, Vehicle_t veh, Speed_t * veh_speed) {
 float calc_new_speed(Vehicle_t veh, Speed_t veh_speed) {
 	// Add in braking force when veh_speed.accelerator_pos < 0.0
-	float power_motor = veh_speed.accelerator_pos * veh.max_power;
+	float power_motor = veh_speed.accelerator_pos * veh.characteristics.max_power;
 	veh.forces.drag_force = calc_drag_force(veh, veh_speed);
 
 	float power_applied = veh.forces.drag_force;
@@ -265,7 +282,7 @@ float calc_new_speed(Vehicle_t veh, Speed_t veh_speed) {
 	float s = (float)SPEED_UPDATE_GAMEPLAY / 1000.0;
 	float vf = 0.0;
 
-	double temp = (power_motor - power_applied) / (2 * veh.mass * s);
+	double temp = (power_motor - power_applied) / (2 * veh.characteristics.mass * s);
 
 	if(temp > 0.0) {
 		vf = sqrt(temp);
@@ -281,7 +298,7 @@ float calc_new_speed(Vehicle_t veh, Speed_t veh_speed) {
 
 /* Fd = Cd * 1/2 * p * v^2 * A */
 float calc_drag_force(Vehicle_t veh, Speed_t speed) {
-	float force = veh.cross_sectional_area * veh.drag_coefficient;
+	float force = veh.characteristics.cross_sectional_area * veh.forces.drag_coefficient;
 	force += pow(speed.speed, 2.0);
 	force = (force * RHO_AIR) / 2;
 
@@ -290,12 +307,12 @@ float calc_drag_force(Vehicle_t veh, Speed_t speed) {
 
 /* Static Friction Force = mu * (Normal Force) = mu * m * g */
 float calc_static_friction_force(Vehicle_t veh) {
-	return veh.tires.static_frict_coef * veh.mass * GRAVITY;
+	return veh.tires.static_frict_coef * veh.characteristics.mass * GRAVITY;
 }
 
 /* Rolling Friction Force = c * (Normal Force) = c * m * g */
 float calc_rolling_friction_force(Vehicle_t veh) {
-	return veh.tires.rolling_frict_coef * veh.mass * GRAVITY;
+	return veh.tires.rolling_frict_coef * veh.characteristics.mass * GRAVITY;
 }
 
 // TODO

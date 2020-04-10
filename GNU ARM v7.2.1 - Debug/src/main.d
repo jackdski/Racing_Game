@@ -62,15 +62,7 @@ src/main.o: ../src/main.c \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/SEGGER/SEGGER_SYSVIEW.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/SEGGER/SEGGER.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/Config/Global.h \
- ../src/configurations.h ../src/cmu.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_cmu.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_common.h \
- ../src/direction.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_acmp.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/common/drivers/capsense.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/SLSTK3402A_EFM32PG12/config/capsenseconfig.h \
- ../src/capsenseconfig.h \
+ ../src/configurations.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/FreeRTOS.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/src/FreeRTOSConfig.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b500f1024gl125.h \
@@ -83,16 +75,25 @@ src/main.o: ../src/main.c \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/mpu_wrappers.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/list.h \
+ ../src/cmu.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_cmu.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_common.h \
+ ../src/direction.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_acmp.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/common/drivers/capsense.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/SLSTK3402A_EFM32PG12/config/capsenseconfig.h \
+ ../src/capsenseconfig.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/semphr.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/queue.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/timers.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h \
- ../src/lcd_display.h \
+ ../src/high_score.h ../src/lcd_display.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/glib/glib.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/glib/glib_color.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/dmd/dmd.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/em_types.h \
- ../src/led.h ../src/speed.h ../src/tracks.h ../src/monitor.h
+ ../src/led.h ../src/monitor.h ../src/speed.h ../src/tracks.h
 
 /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/em_device.h:
 
@@ -222,24 +223,6 @@ src/main.o: ../src/main.c \
 
 ../src/configurations.h:
 
-../src/cmu.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_cmu.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_common.h:
-
-../src/direction.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_acmp.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/common/drivers/capsense.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/SLSTK3402A_EFM32PG12/config/capsenseconfig.h:
-
-../src/capsenseconfig.h:
-
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/FreeRTOS.h:
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/src/FreeRTOSConfig.h:
@@ -264,6 +247,24 @@ src/main.o: ../src/main.c \
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/list.h:
 
+../src/cmu.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_cmu.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_common.h:
+
+../src/direction.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_acmp.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/common/drivers/capsense.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/SLSTK3402A_EFM32PG12/config/capsenseconfig.h:
+
+../src/capsenseconfig.h:
+
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/semphr.h:
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/queue.h:
@@ -271,6 +272,8 @@ src/main.o: ../src/main.c \
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/timers.h:
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h:
+
+../src/high_score.h:
 
 ../src/lcd_display.h:
 
@@ -284,8 +287,8 @@ src/main.o: ../src/main.c \
 
 ../src/led.h:
 
+../src/monitor.h:
+
 ../src/speed.h:
 
 ../src/tracks.h:
-
-../src/monitor.h:

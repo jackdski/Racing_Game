@@ -1,7 +1,6 @@
 src/monitor.o: ../src/monitor.c ../src/monitor.h ../src/configurations.h \
- ../src/speed.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/em_device.h \
+ /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/FreeRTOS.h \
+ /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/src/FreeRTOSConfig.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b500f1024gl125.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/CMSIS/Include/core_cm4.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/CMSIS/Include/cmsis_version.h \
@@ -55,14 +54,6 @@ src/monitor.o: ../src/monitor.c ../src/monitor.h ../src/configurations.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b_dmareq.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b_af_ports.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b_af_pins.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_bus.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_assert.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_cmu.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_common.h \
- /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/FreeRTOS.h \
- /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/src/FreeRTOSConfig.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b500f1024gl125.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/SEGGER/SEGGER_SYSVIEW_FreeRTOS.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/SEGGER/SEGGER_SYSVIEW.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/SEGGER/SEGGER.h \
@@ -74,6 +65,15 @@ src/monitor.o: ../src/monitor.c ../src/monitor.h ../src/configurations.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/mpu_wrappers.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/list.h \
+ ../src/speed.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/em_device.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b500f1024gl125.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_bus.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_assert.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_cmu.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_common.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/semphr.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/queue.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/timers.h \
@@ -83,11 +83,9 @@ src/monitor.o: ../src/monitor.c ../src/monitor.h ../src/configurations.h \
 
 ../src/configurations.h:
 
-../src/speed.h:
+/home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/FreeRTOS.h:
 
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/em_device.h:
+/home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/src/FreeRTOSConfig.h:
 
 /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b500f1024gl125.h:
 
@@ -195,22 +193,6 @@ src/monitor.o: ../src/monitor.c ../src/monitor.h ../src/configurations.h \
 
 /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b_af_pins.h:
 
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_bus.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_assert.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_cmu.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_common.h:
-
-/home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/FreeRTOS.h:
-
-/home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/src/FreeRTOSConfig.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b500f1024gl125.h:
-
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/SEGGER/SEGGER_SYSVIEW_FreeRTOS.h:
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/SEGGER/SEGGER_SYSVIEW.h:
@@ -232,6 +214,24 @@ src/monitor.o: ../src/monitor.c ../src/monitor.h ../src/configurations.h \
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h:
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/list.h:
+
+../src/speed.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/em_device.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b500f1024gl125.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_bus.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_assert.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_cmu.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_gpio.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/emlib/inc/em_common.h:
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/semphr.h:
 

@@ -1,9 +1,5 @@
 src/lcd_display.o: ../src/lcd_display.c ../src/lcd_display.h \
  ../src/configurations.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/glib/glib.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/glib/glib_color.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/dmd/dmd.h \
- /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/em_types.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/FreeRTOS.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/src/FreeRTOSConfig.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/Device/SiliconLabs/EFM32PG12B/Include/efm32pg12b500f1024gl125.h \
@@ -70,10 +66,15 @@ src/lcd_display.o: ../src/lcd_display.c ../src/lcd_display.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/mpu_wrappers.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/list.h \
+ ../src/high_score.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/semphr.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/queue.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/timers.h \
  /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/glib/glib.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/glib/glib_color.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/dmd/dmd.h \
+ /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/em_types.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/common/drivers/display.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/common/drivers/emstatus.h \
  /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/common/drivers/displayconfigall.h \
@@ -92,14 +93,6 @@ src/lcd_display.o: ../src/lcd_display.c ../src/lcd_display.h \
 ../src/lcd_display.h:
 
 ../src/configurations.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/glib/glib.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/glib/glib_color.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/dmd/dmd.h:
-
-/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/em_types.h:
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/FreeRTOS.h:
 
@@ -233,6 +226,8 @@ src/lcd_display.o: ../src/lcd_display.c ../src/lcd_display.h \
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/list.h:
 
+../src/high_score.h:
+
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/semphr.h:
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/queue.h:
@@ -240,6 +235,14 @@ src/lcd_display.o: ../src/lcd_display.c ../src/lcd_display.h \
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/timers.h:
 
 /home/jack/SimplicityStudio/v4_workspace/jdanielski_Final_Project/FreeRTOS/Source/include/task.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/glib/glib.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/glib/glib_color.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/dmd/dmd.h:
+
+/home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//platform/middleware/glib/em_types.h:
 
 /home/jack/SimplicityStudio_v4/developer/sdks/gecko_sdk_suite/v2.6//hardware/kit/common/drivers/display.h:
 
