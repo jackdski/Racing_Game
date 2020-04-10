@@ -37,7 +37,7 @@ void *malloc( size_t xSize );
 
 
 /*  G L O B A L   V A R I A B L E S   */
-eSystemState system_state = Configuration;
+eSystemState system_state = Startup;
 Vehicle_t vehicle;
 eAutopilotState autopilot_state = Autopilot_Disabled;
 Speed_t Vehicle_Speed;

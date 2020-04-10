@@ -216,26 +216,28 @@ void DisplayTask(void * pvParameters) {
 				// see if gameover notification
 				uint32_t notification_value;
 				if(xTaskNotifyWait(ULONG_MAX, ULONG_MAX, &notification_value, 0) == pdTRUE) {
-					xSemaphoreTake(mSystemState, 10);
-					system_state = GameOver;
-					sys_state = system_state;
-					xSemaphoreGive(mSystemState);
+					if(notification_value == MONITOR_GAMEOVER) {
+						xSemaphoreTake(mSystemState, 10);
+						system_state = GameOver;
+						sys_state = system_state;
+						xSemaphoreGive(mSystemState);
+					}
 					break;
 				}
 
-				xSemaphoreTake(mSpeedData, 0);
+				xSemaphoreTake(mSpeedData, 5);
 				veh_speed = Vehicle_Speed;
 
 				xSemaphoreGive(mSpeedData);
 
-				xSemaphoreTake(mDirectionData, 0);
+				xSemaphoreTake(mDirectionData, 5);
 				veh_dir = Vehicle_Direction;
 				xSemaphoreGive(mDirectionData);
 
 				gameplay_draw_screen(vehicle_shape_graphic, veh_speed, veh_dir);
 
-				xSemaphoreTake(mTrack, 0);
-				xSemaphoreTake(mVehicleData, 0);
+				xSemaphoreTake(mTrack, 5);
+				xSemaphoreTake(mVehicleData, 5);
 				bool done = gameplay_draw_track(vehicle, track, veh_speed);
 				xSemaphoreGive(mTrack);
 				xSemaphoreGive(mVehicleData);
@@ -312,6 +314,7 @@ void DisplayTask(void * pvParameters) {
 					system_state = Startup;
 					sys_state = system_state;
 					xSemaphoreGive(mSystemState);
+					xTaskNotifyStateClear(thLCDDisplay);
 				}
 			}
 		}

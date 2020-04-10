@@ -51,7 +51,7 @@ void DirectionTask(void * pvParameters) {
 		capsense_pos = get_capsense_position();
 
 		// Get system state
-		xSemaphoreTake(mSystemState, 0);
+		xSemaphoreTake(mSystemState, 10);
 		sys_state = system_state;
 		xSemaphoreGive(mSystemState);
 
