@@ -15,14 +15,17 @@
 extern eSystemState system_state;
 extern eAutopilotState autopilot_state;
 extern Speed_t Vehicle_Speed;
+Direction_t Vehicle_Direction;
 extern Vehicle_t vehicle;
-//extern Track_t track;
+extern Track_t track;
 
 /*	S E M A P H O R E S   */
 extern SemaphoreHandle_t mSpeedData;
 extern SemaphoreHandle_t mSystemState;
 extern SemaphoreHandle_t mAutopilotState;
 extern SemaphoreHandle_t mVehicleData;
+extern SemaphoreHandle_t mDirectionData;
+extern SemaphoreHandle_t mTrack;
 
 /*	T A S K   H A N D L E S   */
 TaskHandle_t thLEDTask;
@@ -169,6 +172,24 @@ void SpeedTask(void * pvParameters) {
 					case(No_Press):
 					default: buttons_held = false; break;
 				}
+
+				// update position/distance
+				xSemaphoreTake(mSpeedData, 10);
+				uint32_t temp_speed = Vehicle_Speed.speed;
+				xSemaphoreGive(mSpeedData);
+
+				xSemaphoreTake(mDirectionData, 10);
+				xSemaphoreTake(mVehicleData, 10);
+				update_vehicle_position(&vehicle, temp_speed, Vehicle_Direction, 0.05);
+				xSemaphoreGive(mDirectionData);
+
+				xSemaphoreTake(mTrack, 10);
+				float xdiff = track.waypoints[track.index].x - track.waypoints[track.index + 1].x;
+				float ydiff = track.waypoints[track.index].y - track.waypoints[track.index + 1].y;
+				float distance = sqrt(xdiff * xdiff  + ydiff * ydiff);
+
+				xSemaphoreGive(mVehicleData);
+				xSemaphoreGive(mTrack);
 				break;
 			}
 			case(GameOver): {
@@ -294,6 +315,64 @@ float calc_new_speed(Vehicle_t veh, Speed_t veh_speed) {
 
 	vf += (float)veh_speed.speed;
 	return vf;
+}
+
+void update_vehicle_position(Vehicle_t * veh, uint32_t speed, Direction_t veh_direction, float dt) {
+	// find x and y components based on quadrant of angle
+	// make x and y components +/- based on quadrant
+	// add to vehicle position
+	float PI = 3.14;
+	float dx = 0.0;
+	float dy = 0.0;
+
+	float angle = veh_direction.angle;
+	configASSERT((angle <= 360.0) && (angle >= 0.0));
+	uint8_t quadrant = 0;
+	if((veh_direction.angle >= 0.0 && veh_direction.angle <= 90.0) || veh_direction.angle == 360.0) {
+		quadrant = 1;
+	}
+	else if(veh_direction.angle > 90.0 && veh_direction.angle <= 180.0) {
+		quadrant = 2;
+		angle -= 90;
+	}
+	else if(veh_direction.angle > 180.0 && veh_direction.angle <= 270.0) {
+		quadrant = 3;
+		angle -= 180;
+	}
+	else if(veh_direction.angle > 270.0 && veh_direction.angle < 360.0) {
+		quadrant = 4;
+		angle -= 270;
+	}
+
+	angle = angle * PI / 180.0;
+
+	switch(quadrant) {
+		case(1): {
+			dx = -1 * speed * dt * sin(angle);
+			dy = speed * dt * cos(angle);
+			break;
+		}
+		case(2): {
+			dx = -1 * speed * dt * sin(angle);
+			dy = -1 * speed * dt * cos(angle);
+			break;
+		}
+		case(3): {
+			dx = speed * dt * sin(angle);
+			dy = -1 * speed * dt * cos(angle);
+			break;
+		}
+		case(4): {
+			dx = speed * dt * sin(angle);
+			dy = speed * dt * cos(angle);
+			break;
+		}
+		default: configASSERT(false);
+	}
+
+	veh->position.x += dx;
+	veh->position.y += dy;
+	veh->distance_covered += speed * dt;
 }
 
 /* Fd = Cd * 1/2 * p * v^2 * A */

@@ -19,6 +19,11 @@
 #include "timers.h"
 
 /* C O N S T A N T S */
+static GLIB_Context_t   glibContext;
+
+#define MAX_X 					(glibContext.pDisplayGeometry->xSize - 1)
+#define MAX_Y 					(glibContext.pDisplayGeometry->ySize - 1)
+
 #define HUD_Y_OFFSET_UPPER		(MIN_Y + 5)
 #define HUD_Y_OFFSET_LOWER		(MIN_Y + GLIB_FONT_HEIGHT)
 #define HUD_X_OFFSET_LEFT		(5)
@@ -47,17 +52,14 @@ typedef enum {
 /*	S T R U C T S   */
 
 typedef struct {
-	uint16_t x_left_position;
-	uint16_t x_right_position;
-	uint16_t y_upper_position;
-	uint16_t y_lower_position;
-} VehPosition_t;
-
-typedef struct {
-	uint16_t x__position;
 	uint16_t x_position;
 	uint16_t y_position;
 } Pylon_t;
+
+typedef struct {
+	uint8_t x;
+	uint8_t y;
+} Midpoint_Pixel_t;
 
 /*	F U N C T I O N S   */
 

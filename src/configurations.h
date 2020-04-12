@@ -26,11 +26,14 @@
 #define CENTER_X (glibContext.pDisplayGeometry->xSize / 2)
 #define CENTER_Y (glibContext.pDisplayGeometry->ySize / 2)
 
-#define MAX_X (glibContext.pDisplayGeometry->xSize - 1)
-#define MAX_Y (glibContext.pDisplayGeometry->ySize - 1)
+//#define MAX_X (glibContext.pDisplayGeometry->xSize - 1)
+//#define MAX_Y (glibContext.pDisplayGeometry->ySize - 1)
 
 #define MIN_X           0
 #define MIN_Y           0
+
+#define SCREEN_SIZE_METERS_X	40.0
+#define SCREEN_SIZE_METERS_Y	40.0
 
 #define DISPLAY_MAX_STR_LEN     48
 
@@ -41,7 +44,7 @@
 #define MONACO_STR				"Monaco"
 #define MELBOURNE_STR			"Melbourne, Aus."
 
-#define TRACK_PYLON_WIDTH		(MAX_X / 5)
+#define TRACK_PYLON_WIDTH		(MAX_X / 4)
 #define TRACK_PYLON_DISTANCE	(20)
 
 
@@ -223,8 +226,10 @@ typedef struct {
 } Track_Settings_t;
 
 typedef struct {
-	uint16_t distance_marker;
-	eTurnType turn;
+//	uint16_t distance_marker;
+//	eTurnType turn;
+	float x;
+	float y;
 } Waypoint_t;
 
 typedef struct {
@@ -278,19 +283,25 @@ typedef struct {
 typedef struct {
 	eDirection direction;
 	uint8_t position;
-	uint8_t angle;
+	float angle;			// [-1.0, 1.0]
 } Direction_t;
+
+typedef struct {
+	float x;
+	float y;
+} Position_t;
 
 typedef struct {
 	char vehicle_name[20];
 	eCarType car_type;
 	eWeather weather;
 	eRoadType road_type;
+	Position_t position;
 	Tires_t tires;
 	Forces_t forces;
 	Characteristics_t characteristics;
 	Vehicle_Shape_t shape;
-	uint32_t distance_covered;
+	float distance_covered;
 } Vehicle_t;
 
 void vehicle_init(Vehicle_t * veh);

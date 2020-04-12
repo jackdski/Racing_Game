@@ -25,6 +25,7 @@
 
 /*	F U N C T I O N S   */
 void DirectionTask(void * pvParameters);
+void tmr_get_system_state(TimerHandle_t xTimer);
 uint8_t get_capsense_position(void);
 
 

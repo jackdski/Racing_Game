@@ -47,16 +47,10 @@ void VehicleMonitorTask(void * pvParameters) {
 			init_active_warnings(&active_warnings);
 		}
 
-		if(track.waypoints[track.index].distance_marker < vehicle.distance_covered) {
-			track.index++;
-			if(track.index > track.num_waypoints + 3) {
-				xTaskNotify(thLCDDisplay, MONITOR_GAMEOVER, eSetValueWithOverwrite);
-			}
-		}
 
 		// determine slip
 		xSemaphoreTake(mDirectionData, 10);
-		if(Vehicle_Direction.angle != 0) {
+		if(Vehicle_Direction.direction != Straight) {
 			xSemaphoreTake(mSpeedData, 10);
 			if(Vehicle_Speed.speed > 0.0) {
 				xSemaphoreTake(mVehicleData, 10);
@@ -76,7 +70,10 @@ void VehicleMonitorTask(void * pvParameters) {
 			set_warning(&active_warnings, Warning_Slip);
 			break;
 		}
-		case(No_Slip):
+		case(No_Slip): {
+			clear_warning(&active_warnings, Warning_Slip);
+			break;
+		}
 		default: break;
 		}
 
@@ -114,8 +111,7 @@ void clear_warning(Active_Warnings_t * warnings, eWarning_Type warning) {
 // TODO: change 0.1 to steering parameter
  eSlip does_slip(Vehicle_t veh, Speed_t veh_speed) {
 	 float boundary;
-	 boundary = pow((veh_speed.accelerator_pos * veh.characteristics.max_power), 2.0);
-	 boundary += pow(pow(veh_speed.speed, 2.0) / veh.characteristics.turn_radius / 0.1 , 2.0);
+	 boundary = pow(pow(veh_speed.speed, 2.0) / veh.characteristics.turn_radius / 0.5 , 2.0);
 	 boundary = sqrt(boundary);
 
 	 if(boundary >= veh.forces.rolling_friction_force) {
