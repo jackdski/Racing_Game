@@ -17,7 +17,7 @@
 
 
 /* Constants related to the behaviour or the scheduler. */
-#define configUSE_PREEMPTION                    1
+#define configUSE_PREEMPTION                    0
 //#define configUSE_TIME_SLICING                    1
 #define configMAX_PRIORITIES                    ( 5 )
 #define configIDLE_SHOULD_YIELD                 1

@@ -213,7 +213,7 @@ Midpoint_Pixel_t convert_coords_to_pixel(Position_t position, float x, float y) 
 	float rotate[2] = {pylon[0] / SCREEN_SIZE_METERS_X, pylon[1] / SCREEN_SIZE_METERS_Y};
 
 	float px = ((0.5 + rotate[0]) * 128); //MAX_X);
-	float py = ((0.5 - rotate[1])) * 128; // MAX_Y;
+	float py = 128 - (rotate[1] * 128); // MAX_Y;
 
 	Midpoint_Pixel_t midpoint;
 	midpoint.x = (uint8_t)px;

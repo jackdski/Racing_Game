@@ -144,11 +144,17 @@ void SpeedTask(void * pvParameters) {
 							break;
 						}
 						else if(xSemaphoreTake(mSpeedData, 10) == pdPASS) {
+							// Update accelerator_pos
 							if(Vehicle_Speed.accelerator_pos + ACCELERATOR_CHANGE <= ACCELERATOR_MAX_POS) {
 								Vehicle_Speed.accelerator_pos += ACCELERATOR_CHANGE;
 							}
 							else {
 								Vehicle_Speed.accelerator_pos = ACCELERATOR_MAX_POS;
+							}
+
+							// Brakes unapplied
+							if(Vehicle_Speed.accelerator_pos >= 0.0) {
+								Vehicle_Speed.brakes_applied = false;
 							}
 							xSemaphoreGive(mSpeedData);
 						}
@@ -159,11 +165,17 @@ void SpeedTask(void * pvParameters) {
 							xTimerStop(autopilot_timer, 10);
 						}
 						if(xSemaphoreTake(mSpeedData, 10) == pdPASS) {
+							// Update accelerator_pos
 							if(Vehicle_Speed.accelerator_pos - ACCELERATOR_CHANGE >= ACCELERATOR_MIN_POS) {
 								Vehicle_Speed.accelerator_pos -= ACCELERATOR_CHANGE;
 							}
 							else {
 								Vehicle_Speed.accelerator_pos = ACCELERATOR_MIN_POS;
+							}
+
+							// Brakes appliled
+							if(Vehicle_Speed.accelerator_pos < 0.0) {
+								Vehicle_Speed.brakes_applied = true;
 							}
 							xSemaphoreGive(mSpeedData);
 						}
@@ -291,11 +303,17 @@ float calc_new_speed(Vehicle_t veh, Speed_t veh_speed) {
 
 	float power_applied = veh.forces.drag_force;
 
+	// determine static friciton vs. kinetic friction
 	if(veh_speed.speed > 0) {
 		power_applied += veh.forces.rolling_friction_force;
 	}
 	else {
 		power_applied += veh.forces.static_friction_force;
+	}
+
+	// apply braking force
+	if(veh_speed.brakes_applied == true) {
+		power_applied += veh.characteristics.brake_force;
 	}
 
 	power_applied *= (float)veh_speed.speed;

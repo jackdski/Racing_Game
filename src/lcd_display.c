@@ -201,16 +201,18 @@ void DisplayTask(void * pvParameters) {
 
 				if(countdown_value == 0) {
 					countdown_value = 4;	// reset
-					xSemaphoreTake(mSystemState, 10);
-					system_state = Gameplay;
-					sys_state = system_state;
-					xSemaphoreGive(mSystemState);
+					if(xSemaphoreTake(mSystemState, 10)) {
+						system_state = Gameplay;
+						sys_state = system_state;
+						xSemaphoreGive(mSystemState);
+					}
 
 					xSemaphoreTake(mTrack, 10);
 					track.index = 0;
-					xSemaphoreTake(mDirectionData, 10);
-					Vehicle_Direction.angle = find_starting_angle(track);
-					xSemaphoreGive(mDirectionData);
+					if(xSemaphoreTake(mDirectionData, 20)) {
+						Vehicle_Direction.angle = find_starting_angle(track);
+						xSemaphoreGive(mDirectionData);
+					}
 					xSemaphoreGive(mTrack);
 
 					vTaskResume(thVehMon);
@@ -231,22 +233,27 @@ void DisplayTask(void * pvParameters) {
 					break;
 				}
 
-				xSemaphoreTake(mSpeedData, 10);
-				veh_speed = Vehicle_Speed;
+				if(xSemaphoreTake(mSpeedData, 10)) {
+					veh_speed = Vehicle_Speed;
+					xSemaphoreGive(mSpeedData);
+				}
 
-				xSemaphoreGive(mSpeedData);
 
-				xSemaphoreTake(mDirectionData, 10);
-				veh_dir = Vehicle_Direction;
-				xSemaphoreGive(mDirectionData);
+				if(xSemaphoreTake(mDirectionData, 10)) {
+					veh_dir = Vehicle_Direction;
+					xSemaphoreGive(mDirectionData);
+				}
 
 				gameplay_draw_screen(vehicle_shape_graphic, veh_speed, veh_dir);
+				bool done;
 
-				xSemaphoreTake(mTrack, 10);
-				xSemaphoreTake(mVehicleData, 10);
-				bool done = gameplay_draw_track(vehicle, track, veh_speed);
-				xSemaphoreGive(mTrack);
-				xSemaphoreGive(mVehicleData);
+				if(xSemaphoreTake(mTrack, 10)) {
+					if(xSemaphoreTake(mVehicleData, 10)) {
+						 done = gameplay_draw_track(vehicle, track, veh_speed);
+						xSemaphoreGive(mVehicleData);
+					}
+					xSemaphoreGive(mTrack);
+				}
 
 				if(done == true) {
 					xSemaphoreTake(mSystemState, 10);
@@ -838,23 +845,14 @@ void gameplay_calculate_vehicle_shape(Vehicle_t veh, GLIB_Rectangle_t * veh_shap
  * @return true if last waypoint has been reached
  */
 bool gameplay_draw_track(Vehicle_t veh, Track_t track, Speed_t veh_speed) {
-	Midpoint_Pixel_t midpoints[5];
+	Midpoint_Pixel_t midpoints[10];
 	uint8_t i;
-	for(i = 0; i < 5; i++) {
+	for(i = 0; i < 7; i++) {
 		midpoints[i] = convert_coords_to_pixel(veh.position, track.waypoints[track.index + i].x, track.waypoints[track.index + i].y);
 	}
 
-//	if((veh.position.x > (midpoints[0].x - (TRACK_PYLON_WIDTH / 2))) && (veh.position.x < (midpoints[0].x - (TRACK_PYLON_WIDTH / 2)))) {
-//		if((fabs(veh.position.x > midpoints[0].x) || (fabs(veh.position.y - midpoints[0].y)))) {
-//			track.index++;
-//		}
-//	}
-//	else {
-//		return true;
-//	}
-
 	// draw graphic
-	for(i = 4; i > 0; i--) {
+	for(i = 6; i > 0; i--) {
 		GLIB_drawLine(&glibContext,
 				midpoints[i].x - (TRACK_PYLON_WIDTH / 2),
 				midpoints[i].y,

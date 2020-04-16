@@ -82,14 +82,14 @@ void DirectionTask(void * pvParameters) {
 			case(Gameplay): {
 				// update direction based on latest sample
 				switch(capsense_pos) {
-					case(1): direction = Hard_Left;  angle = -10.0; break;
-					case(2): direction = Left; 		 angle =  -5.0; break;
-					case(3): direction = Right;		 angle =  10.0; break;
-					case(4): direction = Hard_Right; angle =   5.0; break;
+					case(1): direction = Hard_Left;  angle =   2.0; break;
+					case(2): direction = Left; 		 angle =   1.0; break;
+					case(3): direction = Right;		 angle =  -1.0; break;
+					case(4): direction = Hard_Right; angle =  -2.0; break;
 					default: direction = Straight; 	 angle =   0.0; break;
 				}
 
-				xSemaphoreTake(mDirectionData, 10);
+				xSemaphoreTake(mDirectionData, 30);
 				Vehicle_Direction.direction = direction; 	// update global variable
 				Vehicle_Direction.angle += angle;
 				if(Vehicle_Direction.angle > 360.0) {

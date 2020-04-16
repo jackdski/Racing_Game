@@ -18,7 +18,7 @@
 /* C O N F I G U R A T I O N   V A L U E S */
 
 /* D I S P L A Y */
-#define DISPLAY_REFRESH_RATE	10		// [Hz]
+#define DISPLAY_REFRESH_RATE	9		// [Hz]
 
 #define GLIB_FONT_WIDTH   (glibContext.font.fontWidth + glibContext.font.charSpacing)
 #define GLIB_FONT_HEIGHT  (glibContext.font.fontHeight)
@@ -123,7 +123,7 @@
 #define SUV_CD					0.23
 #define TRUCK_CD				0.30
 
-/* CROSS-SECTIONAL AREA */ 		// TODO
+/* CROSS-SECTIONAL AREA */
 #define SEDAN_CS_AREA			2.0
 #define SUV_CS_AREA				2.5
 #define TRUCK_CS_AREA			2.75
