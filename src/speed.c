@@ -364,25 +364,24 @@ void update_vehicle_position(Vehicle_t * veh, uint32_t speed, Direction_t veh_di
 
 	angle = angle * PI / 180.0;
 
+	dx = speed * dt * sin(angle);
+	dy = speed * dt * cos(angle);
+
 	switch(quadrant) {
 		case(1): {
-			dx = -1 * speed * dt * sin(angle);
-			dy = speed * dt * cos(angle);
+			dx = -dx;
 			break;
 		}
 		case(2): {
-			dx = -1 * speed * dt * sin(angle);
-			dy = -1 * speed * dt * cos(angle);
+			dx = -dx;
+			dy = -dy;
 			break;
 		}
 		case(3): {
-			dx = speed * dt * sin(angle);
-			dy = -1 * speed * dt * cos(angle);
+			dy = -dy;
 			break;
 		}
 		case(4): {
-			dx = speed * dt * sin(angle);
-			dy = speed * dt * cos(angle);
 			break;
 		}
 		default: configASSERT(false);

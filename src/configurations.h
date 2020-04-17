@@ -18,7 +18,7 @@
 /* C O N F I G U R A T I O N   V A L U E S */
 
 /* D I S P L A Y */
-#define DISPLAY_REFRESH_RATE	9		// [Hz]
+#define DISPLAY_REFRESH_RATE	10		// [Hz]
 
 #define GLIB_FONT_WIDTH   (glibContext.font.fontWidth + glibContext.font.charSpacing)
 #define GLIB_FONT_HEIGHT  (glibContext.font.fontHeight)
@@ -209,15 +209,15 @@ typedef enum {
 /* S T R U C T S */
 
 // Track-related
-typedef enum {
-	Hard_Left_Turn 	 	= -8,		// -60 deg
-	Left_Turn 		 	= -5,		// -45 deg
-	Slight_Left_Turn 	= -2,		// -15 deg
-	Straight_Turn	 	=  0,		//   0 deg
-	Slight_Right_Turn 	=  2,		//  15 deg
-	Right_Turn			=  4,		//  45 deg
-	Hard_Right_Turn		=  6,	//  60 deg
-} eTurnType;
+typedef struct {
+	uint16_t x_position;
+	uint16_t y_position;
+} Pylon_t;
+
+typedef struct {
+	uint8_t x;
+	uint8_t y;
+} Midpoint_Pixel_t;
 
 typedef struct {
 	eGrandPrix track;
@@ -234,11 +234,13 @@ typedef struct {
 
 typedef struct {
 	char name[20];
+	bool initialized;
 	uint16_t index;
 //	uint16_t meters_covered; // TODO
 	uint16_t num_waypoints;
 	uint32_t meters;		// how long the track is
 	Waypoint_t * waypoints;
+	Midpoint_Pixel_t midpoints[10];
 } Track_t;
 
 // Vehicle-related
@@ -283,7 +285,7 @@ typedef struct {
 typedef struct {
 	eDirection direction;
 	uint8_t position;
-	float angle;			// [-1.0, 1.0]
+	float angle;
 } Direction_t;
 
 typedef struct {

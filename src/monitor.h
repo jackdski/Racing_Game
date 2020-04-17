@@ -10,6 +10,7 @@
 
 #include "configurations.h"
 #include "speed.h"
+#include "tracks.h"
 
 #include <math.h>
 #include <stdbool.h>

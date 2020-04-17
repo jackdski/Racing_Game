@@ -229,6 +229,7 @@ void DisplayTask(void * pvParameters) {
 						system_state = GameOver;
 						sys_state = system_state;
 						xSemaphoreGive(mSystemState);
+						xTaskNotifyStateClear(thLCDDisplay);
 					}
 					break;
 				}
@@ -249,8 +250,9 @@ void DisplayTask(void * pvParameters) {
 
 				if(xSemaphoreTake(mTrack, 10)) {
 					if(xSemaphoreTake(mVehicleData, 10)) {
-						 done = gameplay_draw_track(vehicle, track, veh_speed);
+						 done = gameplay_draw_track(vehicle, &track, veh_speed);
 						xSemaphoreGive(mVehicleData);
+						track.initialized = true;
 					}
 					xSemaphoreGive(mTrack);
 				}
@@ -267,6 +269,9 @@ void DisplayTask(void * pvParameters) {
 			}
 			case(GameOver): {
 				stop_high_score_timer();
+				if(eTaskGetState(thVehMon) != (eSuspended)) {
+					vTaskSuspend(thVehMon);
+				}
 
 				static bool inverse = false;
 				if(inverse == true) {
@@ -844,55 +849,32 @@ void gameplay_calculate_vehicle_shape(Vehicle_t veh, GLIB_Rectangle_t * veh_shap
 /*
  * @return true if last waypoint has been reached
  */
-bool gameplay_draw_track(Vehicle_t veh, Track_t track, Speed_t veh_speed) {
-	Midpoint_Pixel_t midpoints[10];
+bool gameplay_draw_track(Vehicle_t veh, Track_t * track, Speed_t veh_speed) {
+//	Midpoint_Pixel_t midpoints[10];
 	uint8_t i;
-	for(i = 0; i < 7; i++) {
-		midpoints[i] = convert_coords_to_pixel(veh.position, track.waypoints[track.index + i].x, track.waypoints[track.index + i].y);
+	for(i = 0; i < 8; i++) {
+		if(convert_coords_to_pixel(&track->midpoints[i], veh.position, track->waypoints[track->index + i].x, track->waypoints[track->index + i].y)) {
+			break;
+		}
 	}
 
 	// draw graphic
-	for(i = 6; i > 0; i--) {
+	uint8_t j;
+	for(j = i; j > 0; j--) {
 		GLIB_drawLine(&glibContext,
-				midpoints[i].x - (TRACK_PYLON_WIDTH / 2),
-				midpoints[i].y,
-				midpoints[i - 1].x - (TRACK_PYLON_WIDTH / 2),
-				midpoints[i - 1].y);
+				track->midpoints[j].x - (TRACK_PYLON_WIDTH / 2),
+				track->midpoints[j].y,
+				track->midpoints[j - 1].x - (TRACK_PYLON_WIDTH / 2),
+				track->midpoints[j - 1].y);
 
 		GLIB_drawLine(&glibContext,
-				midpoints[i].x + (TRACK_PYLON_WIDTH / 2),
-				midpoints[i].y,
-				midpoints[i - 1].x + (TRACK_PYLON_WIDTH / 2),
-				midpoints[i - 1].y);
+				track->midpoints[j].x + (TRACK_PYLON_WIDTH / 2),
+				track->midpoints[j].y,
+				track->midpoints[j - 1].x + (TRACK_PYLON_WIDTH / 2),
+				track->midpoints[j - 1].y);
 	}
 	return false;
 }
-
-void gameplay_connect_waypoints(uint8_t * x_left_start, uint8_t * y_start, eTurnType turn_type) {
-	uint8_t y_end = *y_start - TRACK_PYLON_DISTANCE;
-
-	if(y_end < HUD_Y_LINE) {
-		y_end = HUD_Y_LINE;
-	}
-
-	// left line
-	GLIB_drawLine(&glibContext,
-			*x_left_start,
-			*y_start,
-			*x_left_start + turn_type,
-			y_end);
-
-	// right line
-	GLIB_drawLine(&glibContext,
-			*x_left_start + TRACK_PYLON_WIDTH,
-			*y_start,
-			*x_left_start + TRACK_PYLON_WIDTH + turn_type,
-			y_end);
-
-	*x_left_start += turn_type;
-	*y_start -= TRACK_PYLON_DISTANCE;
-}
-
 
 uint32_t gameplay_calculate_mph_from_ms(Speed_t veh_speed) {
 	return (uint32_t)((float)veh_speed.speed * 2.23694);

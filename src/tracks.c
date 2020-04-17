@@ -30,7 +30,7 @@ static Waypoint_t test_track_waypoints[75] = {
 		{100.0, 54.0},
 		{99.0, 59.0},
 		{98.0, 63.0},
-		{97.0, 88.0},
+		{97.0, 68.0},
 		{95.0, 72.0},
 		{93.0, 76.0},
 		{90.0, 79.0},
@@ -205,20 +205,24 @@ void set_track(Track_t * set_track, eGrandPrix track_name) {
 }
 
 
-Midpoint_Pixel_t convert_coords_to_pixel(Position_t position, float x, float y) {
-//	float x_length = 40.0; // [m]
-//	float y_length = 40.0; // [m]
-
+bool convert_coords_to_pixel(Midpoint_Pixel_t * midpoint, Position_t position, float x, float y) {
 	float pylon[2] = {x - position.x, y - position.y};
 	float rotate[2] = {pylon[0] / SCREEN_SIZE_METERS_X, pylon[1] / SCREEN_SIZE_METERS_Y};
 
-	float px = ((0.5 + rotate[0]) * 128); //MAX_X);
-	float py = 128 - (rotate[1] * 128); // MAX_Y;
+	float px = ((0.5 + rotate[0]) * 128);
+	float py = 128 - (rotate[1] * 128);
+//	float py = (rotate[1] * 128);
 
-	Midpoint_Pixel_t midpoint;
-	midpoint.x = (uint8_t)px;
-	midpoint.y = (uint8_t)py;
-	return midpoint;
+
+	midpoint->x = (uint8_t)px;
+	midpoint->y = (uint8_t)py;
+	if(px > 138 || py > 138) {
+		return true;
+	}
+	if(px < 0.0 || py < 0.0) {
+		return true;
+	}
+	return false;
 }
 
 float find_starting_angle(Track_t track) {
@@ -267,6 +271,10 @@ float length_square(float x1, float y1, float x2, float y2) {
 	float xdiff = x1 - x2;
 	float ydiff = y1 - y2;
 	return (xdiff * xdiff  + ydiff * ydiff);
+}
+
+float get_distance(Waypoint_t w0, Waypoint_t w1) {
+	return sqrt(length_square(w0.x, w0.y, w1.x, w1.y));
 }
 
 uint16_t get_remaining_waypoints_count(Track_t track) {

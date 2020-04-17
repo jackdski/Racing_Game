@@ -21,6 +21,7 @@ extern SemaphoreHandle_t mVehicleData;
 extern SemaphoreHandle_t mSpeedData;
 extern SemaphoreHandle_t mDirectionData;
 extern SemaphoreHandle_t mSystemState;
+extern SemaphoreHandle_t mTrack;
 //extern SemaphoreHandle_t mAutopilotState;
 
 /*	T A S K   H A N D L E S   */
@@ -45,8 +46,35 @@ void VehicleMonitorTask(void * pvParameters) {
 
 		if(sys_state == GameOver) {
 			init_active_warnings(&active_warnings);
+			slip_data = No_Slip;
 		}
 
+		// update waypoints
+		if(xSemaphoreTake(mTrack, 10)) {
+			static bool calc_distance = false;
+			static float distance = 0.0;
+			static float distance_traveled = 0.0;
+//			static Position_t old_position;
+//			old_position = vehicle.position;
+			if(track.initialized) {
+				if(!calc_distance) {
+					distance = sqrt(length_square(track.waypoints[0].x, track.waypoints[0].y, track.waypoints[1].x, track.waypoints[1].y));
+					calc_distance = true;
+				}
+
+				if(xSemaphoreTake(mVehicleData, 10)) {
+//					distance_traveled = vehicle.distance_covered;//sqrt(length_square(track.waypoints[0].x, track.waypoints[0].y, vehicle.position.x, vehicle.position.y));
+	//				old_position = vehicle.position;
+					if(vehicle.distance_covered > distance) {
+						track.index++;
+						calc_distance = false;
+						vehicle.distance_covered = 0.0;
+					}
+				xSemaphoreGive(mVehicleData);
+				}
+			}
+			xSemaphoreGive(mTrack);
+		}
 
 		// determine slip
 		xSemaphoreTake(mDirectionData, 10);
@@ -64,6 +92,7 @@ void VehicleMonitorTask(void * pvParameters) {
 		switch(slip_data) {
 		case(Slip): {
 			set_warning(&active_warnings, Occured_Slip);
+			xTaskNotify(thLCDDisplay, MONITOR_GAMEOVER, eSetValueWithOverwrite);
 			break;
 		}
 		case(Slip_Warning): {
@@ -107,6 +136,7 @@ void clear_warning(Active_Warnings_t * warnings, eWarning_Type warning) {
 	default: break;
 	}
 }
+
 
 // TODO: change 0.1 to steering parameter
  eSlip does_slip(Vehicle_t veh, Speed_t veh_speed) {

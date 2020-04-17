@@ -51,15 +51,6 @@ typedef enum {
 
 /*	S T R U C T S   */
 
-typedef struct {
-	uint16_t x_position;
-	uint16_t y_position;
-} Pylon_t;
-
-typedef struct {
-	uint8_t x;
-	uint8_t y;
-} Midpoint_Pixel_t;
 
 /*	F U N C T I O N S   */
 
@@ -104,8 +95,7 @@ void gameplay_draw_hud(Speed_t veh_speed);
 void gameplay_draw_vehicle(GLIB_Rectangle_t veh_shape, Direction_t veh_dir);
 void gameplay_calculate_vehicle_shape(Vehicle_t veh, GLIB_Rectangle_t * veh_shape);
 int32_t * gen4PolyPoints(uint32_t radius, int32_t xOff, int32_t yOff);
-bool gameplay_draw_track(Vehicle_t veh, Track_t track, Speed_t veh_speed);
-void gameplay_connect_waypoints(uint8_t * x_left_start, uint8_t * y_start, eTurnType turn_type);
+bool gameplay_draw_track(Vehicle_t veh, Track_t * track, Speed_t veh_speed);
 uint32_t gameplay_calculate_mph_from_ms(Speed_t veh_speed);
 
 /* game over */
