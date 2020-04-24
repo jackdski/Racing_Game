@@ -15,10 +15,12 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "glib.h"
+
 /* C O N F I G U R A T I O N   V A L U E S */
 
 /* D I S P L A Y */
-#define DISPLAY_REFRESH_RATE	10		// [Hz]
+#define DISPLAY_REFRESH_RATE	25		// [Hz]
 
 #define GLIB_FONT_WIDTH   (glibContext.font.fontWidth + glibContext.font.charSpacing)
 #define GLIB_FONT_HEIGHT  (glibContext.font.fontHeight)
@@ -44,7 +46,7 @@
 #define MONACO_STR				"Monaco"
 #define MELBOURNE_STR			"Melbourne, Aus."
 
-#define TRACK_PYLON_WIDTH		(MAX_X / 4)
+#define TRACK_PYLON_WIDTH		(MAX_X / 3)
 #define TRACK_PYLON_DISTANCE	(20)
 
 
@@ -240,7 +242,7 @@ typedef struct {
 	uint16_t num_waypoints;
 	uint32_t meters;		// how long the track is
 	Waypoint_t * waypoints;
-	Midpoint_Pixel_t midpoints[10];
+	Midpoint_Pixel_t midpoints[25];
 } Track_t;
 
 // Vehicle-related
@@ -302,7 +304,7 @@ typedef struct {
 	Tires_t tires;
 	Forces_t forces;
 	Characteristics_t characteristics;
-	Vehicle_Shape_t shape;
+	GLIB_Rectangle_t shape;
 	float distance_covered;
 } Vehicle_t;
 

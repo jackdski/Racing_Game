@@ -45,7 +45,7 @@ void high_score_add(High_Score_List_t * list, uint32_t new_data) {
 }
 
 uint32_t calculate_score(uint32_t max_speed, uint32_t distance, float trial_time) {
-	return max_speed * distance * (100 / trial_time);
+	return max_speed * distance * (10 / trial_time);
 }
 
 void start_high_score_timer(void) {

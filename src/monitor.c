@@ -51,24 +51,49 @@ void VehicleMonitorTask(void * pvParameters) {
 
 		// update waypoints
 		if(xSemaphoreTake(mTrack, 10)) {
-			static bool calc_distance = false;
-			static float distance = 0.0;
-			static float distance_traveled = 0.0;
-//			static Position_t old_position;
-//			old_position = vehicle.position;
+//			static bool calc_distance = false;
+//			static float distance = 0.0;
+//			static float distance_traveled = 0.0;
 			if(track.initialized) {
-				if(!calc_distance) {
-					distance = sqrt(length_square(track.waypoints[0].x, track.waypoints[0].y, track.waypoints[1].x, track.waypoints[1].y));
-					calc_distance = true;
-				}
+//				if(!calc_distance) {
+//					distance = sqrt(length_square(track.waypoints[0].x, track.waypoints[0].y, track.waypoints[1].x, track.waypoints[1].y));
+//					calc_distance = true;
+//				}
 
 				if(xSemaphoreTake(mVehicleData, 10)) {
-//					distance_traveled = vehicle.distance_covered;//sqrt(length_square(track.waypoints[0].x, track.waypoints[0].y, vehicle.position.x, vehicle.position.y));
-	//				old_position = vehicle.position;
-					if(vehicle.distance_covered > distance) {
+//					if(vehicle.distance_covered > distance) {
+////					if(vehicle.shape.top_pos < track.midpoints[track.index].y)
+//						track.index++;
+//						calc_distance = false;
+//						vehicle.distance_covered = 0.0;
+//					}
+					// check if index needs to be increased
+//					if(track.midpoints[2].y > vehicle.shape.yMin) {
+//						track.index++;
+//					}
+					if(track.midpoints[1].y > 128) {
 						track.index++;
-						calc_distance = false;
-						vehicle.distance_covered = 0.0;
+					}
+
+					// TODO: check if offroad
+					uint8_t i;
+					for(i = 0; i < 6; i++) {
+						uint8_t width_adj = (128 / 3 / 2);
+						int32_t xmax = track.midpoints[i].x + width_adj;
+						int32_t xmin = track.midpoints[i].x - width_adj;
+						if(vehicle.shape.xMax > xmax) {
+							// game over
+							xTaskNotify(thLCDDisplay, MONITOR_GAMEOVER, eSetValueWithOverwrite);
+						}
+						else if(vehicle.shape.xMin < xmin) {
+							// game over
+							xTaskNotify(thLCDDisplay, MONITOR_GAMEOVER, eSetValueWithOverwrite);
+						}
+					}
+
+					// see if game over
+					if(track.index == track.num_waypoints) {
+						// win
 					}
 				xSemaphoreGive(mVehicleData);
 				}

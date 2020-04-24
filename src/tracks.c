@@ -14,7 +14,7 @@
 #include "FreeRTOS.h"
 
 // global
-extern Track_t track;
+
 
 // Private
 static Track_t test_track;
@@ -161,7 +161,7 @@ void init_tracks(void) {
 	strcpy(test_track.name, "Test Track");
 	test_track.num_waypoints=  75;
 	test_track.meters 		= test_track.num_waypoints * 10;
-	test_track.index 		= 	0;
+	test_track.index 		= 	1;
 	test_track.waypoints	= test_track_waypoints;
 
 	// SPA, Belgium
@@ -209,8 +209,8 @@ bool convert_coords_to_pixel(Midpoint_Pixel_t * midpoint, Position_t position, f
 	float pylon[2] = {x - position.x, y - position.y};
 	float rotate[2] = {pylon[0] / SCREEN_SIZE_METERS_X, pylon[1] / SCREEN_SIZE_METERS_Y};
 
-	float px = ((0.5 + rotate[0]) * 128);
-	float py = 128 - (rotate[1] * 128);
+	float px = ((0.5 + rotate[0]) * 128) + 0.5;
+	float py = 128 - (rotate[1] * 128) + 0.5;
 //	float py = (rotate[1] * 128);
 
 
@@ -242,7 +242,7 @@ float find_starting_angle(Track_t track) {
     uint32_t b2 = length_square(a[0], a[1], c[0], c[1]);
     uint32_t c2 = length_square(a[0], a[1], c[0], c[1]);
 
-    float la = sqrt(a2);
+//    float la = sqrt(a2);
     float lb = sqrt(b2);
     float lc = sqrt(c2);
 

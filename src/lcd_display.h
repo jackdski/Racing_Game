@@ -88,15 +88,17 @@ void decrement_road_choice(Vehicle_t * veh);
 
 /* getready */
 void getready_draw_countdown(uint8_t count);
+void bezier_track(Track_t * track);
 
 /* gameplay */
 void gameplay_draw_screen(GLIB_Rectangle_t veh_shape, Speed_t veh_speed, Direction_t veh_dir);
 void gameplay_draw_hud(Speed_t veh_speed);
 void gameplay_draw_vehicle(GLIB_Rectangle_t veh_shape, Direction_t veh_dir);
-void gameplay_calculate_vehicle_shape(Vehicle_t veh, GLIB_Rectangle_t * veh_shape);
+void gameplay_calculate_vehicle_shape(Vehicle_t * veh);
 int32_t * gen4PolyPoints(uint32_t radius, int32_t xOff, int32_t yOff);
 bool gameplay_draw_track(Vehicle_t veh, Track_t * track, Speed_t veh_speed);
 uint32_t gameplay_calculate_mph_from_ms(Speed_t veh_speed);
+void bezierCurve(Waypoint_t midpoints[], Waypoint_t * new_points);
 
 /* game over */
 void gameover_print_header(void);

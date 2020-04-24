@@ -50,7 +50,7 @@ static TimerHandle_t 	startup_timer;
 static TimerHandle_t 	gameover_timer;
 static TimerHandle_t 	highscore_timer;
 //static GLIB_Context_t   glibContext;
-static GLIB_Rectangle_t vehicle_shape_graphic;
+//static GLIB_Rectangle_t vehicle_shape_graphic;
 static uint16_t 		vehicle_x_position;
 //static VehPosition_t 	vehicle_position;
 
@@ -137,7 +137,7 @@ void DisplayTask(void * pvParameters) {
 						case(LCD_CONFIG_CONFIRM): {
 							// calculate the vehicle model
 							xSemaphoreTake(mVehicleData, 10);
-							gameplay_calculate_vehicle_shape(vehicle, &vehicle_shape_graphic);
+							gameplay_calculate_vehicle_shape(&vehicle); // , &vehicle.vehicle_shape_graphic);
 //							vehicle_x_position = CENTER_X - (vehicle.characteristics.width / 2);
 
 
@@ -245,12 +245,12 @@ void DisplayTask(void * pvParameters) {
 					xSemaphoreGive(mDirectionData);
 				}
 
-				gameplay_draw_screen(vehicle_shape_graphic, veh_speed, veh_dir);
 				bool done;
 
 				if(xSemaphoreTake(mTrack, 10)) {
 					if(xSemaphoreTake(mVehicleData, 10)) {
-						 done = gameplay_draw_track(vehicle, &track, veh_speed);
+						gameplay_draw_screen(vehicle.shape, veh_speed, veh_dir);
+						done = gameplay_draw_track(vehicle, &track, veh_speed);
 						xSemaphoreGive(mVehicleData);
 						track.initialized = true;
 					}
@@ -718,6 +718,7 @@ void getready_draw_countdown(uint8_t count) {
 
 }
 
+
 //***********************************************************************************
 // gameplay
 //***********************************************************************************
@@ -778,7 +779,6 @@ void gameplay_draw_hud(Speed_t veh_speed) {
 }
 
 void gameplay_draw_vehicle(GLIB_Rectangle_t veh_shape, Direction_t veh_dir) {
-	// TODO: use turn radius here
 	switch(veh_dir.direction) {
 		case(Straight): {
 			GLIB_drawRect(&glibContext, &veh_shape);
@@ -838,46 +838,96 @@ void gameplay_draw_vehicle(GLIB_Rectangle_t veh_shape, Direction_t veh_dir) {
 	}
 }
 
-void gameplay_calculate_vehicle_shape(Vehicle_t veh, GLIB_Rectangle_t * veh_shape) {
-	veh_shape->xMax = CENTER_X + ((int32_t)veh.characteristics.width / 2);
-	veh_shape->xMin = CENTER_X - ((int32_t)veh.characteristics.width / 2);;
-	veh_shape->yMin = MAX_Y - 1;
-	veh_shape->yMax = veh_shape->yMin - veh.characteristics.length;
+void gameplay_calculate_vehicle_shape(Vehicle_t * veh) { //, GLIB_Rectangle_t * veh_shape) {
+
+	veh->shape.xMax = CENTER_X + ((int32_t)veh->characteristics.width / 2);
+	veh->shape.xMin = CENTER_X - ((int32_t)veh->characteristics.width / 2);;
+	veh->shape.yMin = MAX_Y - 1;
+	veh->shape.yMax = veh->shape.yMin - veh->characteristics.length;
 }
 
 
 /*
+ * 	1. Generate pylons
+ * 	Convert current scope of waypoints to pixel midpoints
+ * 	2. Apply Bezier to 4 data points at a time
+ * 		2a. Save the 10 generated points
+ * 		2b. Connect these 10 new points together using GLIB_drawLine()
+ *
  * @return true if last waypoint has been reached
  */
 bool gameplay_draw_track(Vehicle_t veh, Track_t * track, Speed_t veh_speed) {
-//	Midpoint_Pixel_t midpoints[10];
 	uint8_t i;
-	for(i = 0; i < 8; i++) {
-		if(convert_coords_to_pixel(&track->midpoints[i], veh.position, track->waypoints[track->index + i].x, track->waypoints[track->index + i].y)) {
-			break;
+	Waypoint_t temp[4];
+	Waypoint_t pylons[30];
+//	Midpoint_Pixel_t midpoints[10];
+
+	uint8_t times;
+	for(times = 0; times < 3; times++) {	// do 8 points
+		for(i = 0; i < 4; i++) {
+			temp[i] = track->waypoints[track->index + i + (times * 3)];
+//			if(times == 1) {
+//				temp[i] = track->waypoints[track->index + i];
+//			}
+//			else if(times == 2) {
+//				temp[i] = track->waypoints[track->index + i + 3];
+//			}
 		}
-	}
 
-	// draw graphic
-	uint8_t j;
-	for(j = i; j > 0; j--) {
-		GLIB_drawLine(&glibContext,
-				track->midpoints[j].x - (TRACK_PYLON_WIDTH / 2),
-				track->midpoints[j].y,
-				track->midpoints[j - 1].x - (TRACK_PYLON_WIDTH / 2),
-				track->midpoints[j - 1].y);
+		bezierCurve(temp, pylons);
 
-		GLIB_drawLine(&glibContext,
-				track->midpoints[j].x + (TRACK_PYLON_WIDTH / 2),
-				track->midpoints[j].y,
-				track->midpoints[j - 1].x + (TRACK_PYLON_WIDTH / 2),
-				track->midpoints[j - 1].y);
+		for(i = 0; i < 11; i++) {
+//			if(times == 1) {
+//				if(convert_coords_to_pixel(&track->midpoints[i + (times * 11)], veh.position, pylons[i].x, pylons[i].y)) {
+//					break;
+//				}
+//			}
+//			else if(times == 2) {
+//				if(convert_coords_to_pixel(&track->midpoints[(i + 11)], veh.position, pylons[i].x, pylons[i].y)) {
+//					i += 10;
+//					break;
+//				}
+//			}
+			if(convert_coords_to_pixel(&track->midpoints[i + (times * 11)], veh.position, pylons[i].x, pylons[i].y)) {
+				break;
+			}
+
+		}
+
+			// draw graphic
+		int8_t j;
+		for(j = i-1; j > 0; j--) {
+			GLIB_drawLine(&glibContext,
+					track->midpoints[j + (times * 11)].x - (TRACK_PYLON_WIDTH / 2),
+					track->midpoints[j + (times * 11)].y,
+					track->midpoints[j + (times * 11) - 1].x - (TRACK_PYLON_WIDTH / 2),
+					track->midpoints[j + (times * 11) - 1].y);
+
+			GLIB_drawLine(&glibContext,
+					track->midpoints[j + (times * 11)].x + (TRACK_PYLON_WIDTH / 2),
+					track->midpoints[j + (times * 11)].y,
+					track->midpoints[j + (times * 11) - 1].x + (TRACK_PYLON_WIDTH / 2),
+					track->midpoints[j + (times * 11) - 1].y);
+		}
 	}
 	return false;
 }
 
 uint32_t gameplay_calculate_mph_from_ms(Speed_t veh_speed) {
 	return (uint32_t)((float)veh_speed.speed * 2.23694);
+}
+
+void bezierCurve(Waypoint_t midpoints[], Waypoint_t * new_points) {
+	double xu = 0.0 , yu = 0.0 , u = 0.0;
+	uint8_t i = 0;
+	for(u = 0.0 ; u <= 1.0 ; u += 0.1) {
+		xu = pow(1-u,3) * midpoints[0].x + 3 * u * pow(1-u,2) * midpoints[1].x + 3 * pow(u,2) * (1-u) * midpoints[2].x + pow(u,3) * midpoints[3].x;
+		yu = pow(1-u,3) * midpoints[0].y + 3 * u * pow(1-u,2) * midpoints[1].y + 3 * pow(u,2) * (1-u) * midpoints[2].y + pow(u,3) * midpoints[3].y;
+//		printf("X: %f\tY: %f\n", xu , yu);
+		new_points[i].x = (uint8_t)(xu + 0.5);
+		new_points[i].y = (uint8_t)(yu + 0.5);
+		i++;
+	}
 }
 
 //***********************************************************************************
