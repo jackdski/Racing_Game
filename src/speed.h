@@ -58,6 +58,7 @@ void tmrAutopilotCallback(TimerHandle_t xTimer);
 void tmrConfigCallback(TimerHandle_t xTimer);
 void tmrAccelDistanceCallback(TimerHandle_t xTimer);
 float calc_new_speed(Vehicle_t veh, Speed_t veh_speed);
+void update_vehicle_position(Vehicle_t * veh, uint32_t speed, Direction_t veh_direction, float dt);
 float calc_drag_force(Vehicle_t veh, Speed_t speed);
 float calc_static_friction_force(Vehicle_t veh);
 float calc_rolling_friction_force(Vehicle_t veh);

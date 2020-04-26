@@ -4,6 +4,7 @@
 #include "led.h"
 #include "em_cmu.h"
 #include "configurations.h"
+#include "monitor.h"
 
 /*  F R E E R T O S   I N C L U D E S   */
 #include "FreeRTOS.h"
@@ -15,6 +16,7 @@
 //***********************************************************************************
 /*  G L O B A L   V A R I A B L E S   */
 extern eSystemState system_state;
+extern Active_Warnings_t active_warnings;
 
 /*	S E M A P H O R E S   */
 extern SemaphoreHandle_t mSystemState;
@@ -59,7 +61,28 @@ void LedTask(void *pvParameters) {
 				break;
 			}
 			case(Gameplay): {
-				// wait for notification/event flag
+				if(active_warnings.slip_occured) {
+					setting0 = true;
+				}
+				else if(active_warnings.slip_warning) {
+					setting0 ^= 1;
+				}
+				else {
+					setting0 = 0;
+				}
+
+				if(active_warnings.steering_offroad) {
+					setting1 = true;
+				}
+				else if(active_warnings.steering_warning) {
+					setting1 ^= 1;
+				}
+				else {
+					setting1 = 0;
+				}
+
+				set_led0(setting0);
+				set_led1(setting1);
 				break;
 			}
 			case(GameOver): {

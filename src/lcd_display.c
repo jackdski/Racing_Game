@@ -21,6 +21,7 @@
 #include "glib.h"
 
 #include "tracks.h"
+#include "high_score.h"
 
 /*  G L O B A L   V A R I A B L E S   */
 extern eSystemState 	system_state;
@@ -30,6 +31,7 @@ extern Speed_t 			Vehicle_Speed;
 extern Direction_t 		Vehicle_Direction;
 extern Track_t 			track;
 extern Track_Settings_t track_settings;
+extern High_Score_List_t high_scores;
 
 /*	S E M A P H O R E S   */
 extern SemaphoreHandle_t mSpeedData;
@@ -47,10 +49,12 @@ extern TaskHandle_t thVehMon;
 static TimerHandle_t 	startup_timer;
 static TimerHandle_t 	gameover_timer;
 static TimerHandle_t 	highscore_timer;
-static GLIB_Context_t   glibContext;
-static GLIB_Rectangle_t vehicle_shape_graphic;
+//static GLIB_Context_t   glibContext;
+//static GLIB_Rectangle_t vehicle_shape_graphic;
 static uint16_t 		vehicle_x_position;
 //static VehPosition_t 	vehicle_position;
+static GLIB_Context_t   glibContext;
+
 
 /*	T A S K   */
 
@@ -104,15 +108,11 @@ void DisplayTask(void * pvParameters) {
 
 		switch(sys_state) {
 			case(Startup): {
-				static bool written = false;
-				if(written == false) {
-					startup_screen();
-					DMD_updateDisplay();
+				startup_screen();
+				DMD_updateDisplay();
 
-					if(xTimerIsTimerActive(startup_timer) == pdFALSE) {
-						xTimerStart(startup_timer, 10);
-					}
-					written = true;
+				if(xTimerIsTimerActive(startup_timer) == pdFALSE) {
+					xTimerStart(startup_timer, 10);
 				}
 				break;
 			}
@@ -139,19 +139,24 @@ void DisplayTask(void * pvParameters) {
 						case(LCD_CONFIG_CONFIRM): {
 							// calculate the vehicle model
 							xSemaphoreTake(mVehicleData, 10);
-							gameplay_calculate_vehicle_shape(vehicle, &vehicle_shape_graphic);
-							vehicle_x_position = CENTER_X - (vehicle.width / 2);
-							xSemaphoreGive(mVehicleData);
+							gameplay_calculate_vehicle_shape(&vehicle); // , &vehicle.vehicle_shape_graphic);
+//							vehicle_x_position = CENTER_X - (vehicle.characteristics.width / 2);
+
 
 							xSemaphoreTake(mTrack, 10);
-							cpy_track_settings = track_settings;
+							track_settings = cpy_track_settings;
 							set_track(&track, track_settings.track);
+							vehicle.position.x = track.waypoints[0].x;
+							vehicle.position.y = track.waypoints[0].y;
+							xSemaphoreGive(mVehicleData);
 							xSemaphoreGive(mTrack);
 
 							// progress the system state
 							xSemaphoreTake(mSystemState, 10);
 							system_state = GetReady;
 							xSemaphoreGive(mSystemState);
+
+							written = false; // reset value
 							break;
 						}
 						case(LCD_CONFIG_TYPE_NEXT): {
@@ -198,11 +203,22 @@ void DisplayTask(void * pvParameters) {
 
 				if(countdown_value == 0) {
 					countdown_value = 4;	// reset
-					xSemaphoreTake(mSystemState, 10);
-					system_state = Gameplay;
-					sys_state = system_state;
-					xSemaphoreGive(mSystemState);
+					if(xSemaphoreTake(mSystemState, 10)) {
+						system_state = Gameplay;
+						sys_state = system_state;
+						xSemaphoreGive(mSystemState);
+					}
+
+					xSemaphoreTake(mTrack, 10);
+					track.index = 0;
+					if(xSemaphoreTake(mDirectionData, 20)) {
+						Vehicle_Direction.angle = find_starting_angle(track);
+						xSemaphoreGive(mDirectionData);
+					}
+					xSemaphoreGive(mTrack);
+
 					vTaskResume(thVehMon);
+					start_high_score_timer();
 				}
 				break;
 			}
@@ -210,29 +226,38 @@ void DisplayTask(void * pvParameters) {
 				// see if gameover notification
 				uint32_t notification_value;
 				if(xTaskNotifyWait(ULONG_MAX, ULONG_MAX, &notification_value, 0) == pdTRUE) {
-					xSemaphoreTake(mSystemState, 10);
-					system_state = GameOver;
-					sys_state = system_state;
-					xSemaphoreGive(mSystemState);
+					if(notification_value == MONITOR_GAMEOVER) {
+						xSemaphoreTake(mSystemState, 10);
+						system_state = GameOver;
+						sys_state = system_state;
+						xSemaphoreGive(mSystemState);
+						xTaskNotifyStateClear(thLCDDisplay);
+					}
 					break;
 				}
 
-				xSemaphoreTake(mSpeedData, 0);
-				veh_speed = Vehicle_Speed;
+				if(xSemaphoreTake(mSpeedData, 10)) {
+					veh_speed = Vehicle_Speed;
+					xSemaphoreGive(mSpeedData);
+				}
 
-				xSemaphoreGive(mSpeedData);
 
-				xSemaphoreTake(mDirectionData, 0);
-				veh_dir = Vehicle_Direction;
-				xSemaphoreGive(mDirectionData);
+				if(xSemaphoreTake(mDirectionData, 10)) {
+					veh_dir = Vehicle_Direction;
+					xSemaphoreGive(mDirectionData);
+				}
 
-				gameplay_draw_screen(vehicle_shape_graphic, veh_speed, veh_dir);
+				bool done;
 
-				xSemaphoreTake(mTrack, 0);
-				xSemaphoreTake(mVehicleData, 0);
-				bool done = gameplay_draw_track(vehicle, track, veh_speed);
-				xSemaphoreGive(mTrack);
-				xSemaphoreGive(mVehicleData);
+				if(xSemaphoreTake(mTrack, 10)) {
+					if(xSemaphoreTake(mVehicleData, 10)) {
+						gameplay_draw_screen(vehicle.shape, veh_speed, veh_dir);
+						done = gameplay_draw_track(vehicle, &track, veh_speed);
+						xSemaphoreGive(mVehicleData);
+						track.initialized = true;
+					}
+					xSemaphoreGive(mTrack);
+				}
 
 				if(done == true) {
 					xSemaphoreTake(mSystemState, 10);
@@ -245,6 +270,15 @@ void DisplayTask(void * pvParameters) {
 				break;
 			}
 			case(GameOver): {
+				// stop gameplay timer
+				stop_high_score_timer();
+
+				// suspend Vehicle Monitor Task
+				if(eTaskGetState(thVehMon) != (eSuspended)) {
+					vTaskSuspend(thVehMon);
+				}
+
+				// Change "Game Over" display
 				static bool inverse = false;
 				if(inverse == true) {
 					gameover_print_header_inverse();
@@ -264,18 +298,32 @@ void DisplayTask(void * pvParameters) {
 				uint32_t notification_value;
 				if(xTaskNotifyWait(ULONG_MAX, ULONG_MAX, &notification_value, 0) == pdTRUE) {
 					if(notification_value == LCD_GAMEOVER_NEXT) {
+						// add info to High Score Board
+						xSemaphoreTake(mSpeedData, 5);
+						uint32_t max_speed = Vehicle_Speed.max_speed;
+						xSemaphoreGive(mSpeedData);
+
+						xSemaphoreTake(mVehicleData, 5);
+						uint32_t distance = vehicle.distance_covered;
+						xSemaphoreGive(mVehicleData);
+
+						uint32_t new_score = calculate_score(max_speed, distance, get_high_score_timer_value());
+						high_score_add(&high_scores, new_score);
+
+						// change state to HighScore
 						xSemaphoreTake(mSystemState, 10);
 						system_state = HighScore;
 						sys_state = system_state;
 						xSemaphoreGive(mSystemState);
 					}
+					xTaskNotifyStateClear(thLCDDisplay);
 				}
 
 				break;
 			}
 			case(HighScore): {
 				// Display High Score data
-				high_score_display();
+				high_score_display(high_scores);
 				DMD_updateDisplay();
 
 				// start timer
@@ -288,9 +336,10 @@ void DisplayTask(void * pvParameters) {
 				xTaskNotifyWait(ULONG_MAX, ULONG_MAX, &notification_value, portMAX_DELAY);
 				if(notification_value == LCD_HIGHSCORE_RESET) {
 					xSemaphoreTake(mSystemState, 10);
-					system_state = Configuration;
+					system_state = Startup;
 					sys_state = system_state;
 					xSemaphoreGive(mSystemState);
+					xTaskNotifyStateClear(thLCDDisplay);
 				}
 			}
 		}
@@ -398,7 +447,6 @@ void config_write_car_type(eCarType carType) {
 			case(Sedan): snprintf(str, DISPLAY_MAX_STR_LEN, SEDAN_STR); break;
 			case(SUV): snprintf(str, DISPLAY_MAX_STR_LEN, SUV_STR); break;
 			case(Truck): snprintf(str, DISPLAY_MAX_STR_LEN, TRUCK_STR); break;
-			case(Van): snprintf(str, DISPLAY_MAX_STR_LEN, VAN_STR); break;
 			case(F1): snprintf(str, DISPLAY_MAX_STR_LEN, F1_STR); break;
 		}
 
@@ -508,7 +556,7 @@ void config_update(Vehicle_t veh, Track_Settings_t settings, eDotSelect dot_pos)
 
 	config_write_track_type(settings.track);
 	config_write_car_type(veh.car_type);
-	config_write_tire_type(veh.tire_type);
+	config_write_tire_type(veh.tires.tire_type);
 	config_write_weather_type(veh.weather);
 	config_write_road_type(veh.road_type);
 }
@@ -574,35 +622,15 @@ void decrement_track_choice(Track_Settings_t * settings) {
 void increment_car_choice(Vehicle_t * veh) {
 	switch(veh->car_type) {
 	case(Sedan): {
-		veh->car_type	= SUV;
-		veh->length		= SUV_LENGTH;
-		veh->width		= SUV_WIDTH;
-		veh->mass		= SUV_MASS;
-		veh->max_power	= SUV_MAX_POWER;
+		vehicle_change_settings(veh, SUV);
 		break;
 	}
 	case(SUV): {
-		veh->car_type	= Truck;
-		veh->length		= TRUCK_LENGTH;
-		veh->width		= TRUCK_WIDTH;
-		veh->mass 		= TRUCK_MASS;
-		veh->max_power 	= TRUCK_MAX_POWER;
+		vehicle_change_settings(veh, Truck);
 		break;
 	}
 	case(Truck): {
-		veh->car_type	= Van;
-		veh->length 	= VAN_LENGTH;
-		veh->width		= VAN_WIDTH;
-		veh->mass		= VAN_MASS;
-		veh->max_power	= VAN_MAX_POWER;
-		break;
-	}
-	case(Van): {
-		veh->car_type	= F1;
-		veh->length		= F1_LENGTH;
-		veh->width		= F1_WIDTH;
-		veh->mass		= F1_MASS;
-		veh->max_power	= F1_MAX_POWER;
+		vehicle_change_settings(veh, F1);
 		break;
 	}
 	default: break;
@@ -612,35 +640,15 @@ void increment_car_choice(Vehicle_t * veh) {
 void decrement_car_choice(Vehicle_t * veh) {
 	switch(veh->car_type) {
 	case(SUV): {
-		veh->car_type	= Sedan;
-		veh->length		= SEDAN_LENGTH;
-		veh->width 		= SEDAN_WIDTH;
-		veh->mass 		= SEDAN_MASS;
-		veh->max_power	= SEDAN_MAX_POWER;
+		vehicle_change_settings(veh, Sedan);
 		break;
 	}
 	case(Truck): {
-		veh->car_type	= SUV;
-		veh->length		= SUV_LENGTH;
-		veh->width		= SUV_WIDTH;
-		veh->mass		= SUV_MASS;
-		veh->max_power	= SUV_MAX_POWER;
-		break;
-	}
-	case(Van): {
-		veh->car_type 	= Truck;
-		veh->length		= TRUCK_LENGTH;
-		veh->width		= TRUCK_WIDTH;
-		veh->mass 		= TRUCK_MASS;
-		veh->max_power	= TRUCK_MAX_POWER;
+		vehicle_change_settings(veh, SUV);
 		break;
 	}
 	case(F1): {
-		veh->car_type	= Van;
-		veh->length		= VAN_LENGTH;
-		veh->width		= VAN_WIDTH;
-		veh->mass 		= VAN_MASS;
-		veh->max_power	= VAN_MAX_POWER;
+		vehicle_change_settings(veh, Truck);
 		break;
 	}
 	default: break;
@@ -649,17 +657,17 @@ void decrement_car_choice(Vehicle_t * veh) {
 
 /* Tire Selection */
 void increment_tire_choice(Vehicle_t * veh) {
-	switch(veh->tire_type) {
-	case(Normal): veh->tire_type = Slicks; break;
-	case(Slicks): veh->tire_type = Snow_Tires; break;
+	switch(veh->tires.tire_type) {
+	case(Normal):		veh->tires.tire_type = Slicks; break;
+	case(Slicks):		veh->tires.tire_type = Snow_Tires; break;
 	default: break;
 	}
 }
 
 void decrement_tire_choice(Vehicle_t * veh) {
-	switch(veh->tire_type) {
-	case(Slicks): 		veh->tire_type = Normal; break;
-	case(Snow_Tires): 	veh->tire_type = Slicks; break;
+	switch(veh->tires.tire_type) {
+	case(Slicks): 		veh->tires.tire_type = Normal; break;
+	case(Snow_Tires):	veh->tires.tire_type = Slicks; break;
 	default: break;
 	}
 }
@@ -716,6 +724,7 @@ void getready_draw_countdown(uint8_t count) {
 				  0);
 
 }
+
 
 //***********************************************************************************
 // gameplay
@@ -777,223 +786,138 @@ void gameplay_draw_hud(Speed_t veh_speed) {
 }
 
 void gameplay_draw_vehicle(GLIB_Rectangle_t veh_shape, Direction_t veh_dir) {
-	if(veh_dir.direction == Straight) {
-		GLIB_Rectangle_t current_veh_shape = veh_shape;
-
-		// move to x position
-		current_veh_shape.xMax += vehicle_x_position;
-
-		if(current_veh_shape.xMax > MAX_X - 1) {
-			current_veh_shape.xMax = MAX_X - 1;
-			current_veh_shape.xMin = current_veh_shape.xMax - (veh_shape.xMax - veh_shape.xMin);
-		}
-		else {
-			current_veh_shape.xMin += vehicle_x_position;
-		}
-	    GLIB_drawRect(&glibContext, &current_veh_shape);
-	}
-	else {
-
-		// TODO: use turn radius here
-		switch(veh_dir.direction) {
-			case(Left): {
-				if(vehicle_x_position > 2) {
-					vehicle_x_position -= 1;
-				}
-				// draw 4 lines to draw vehicle shape
-				GLIB_drawLine(&glibContext, veh_shape.xMin + vehicle_x_position + 2, veh_shape.yMin,
-						veh_shape.xMin + vehicle_x_position, veh_shape.yMax); 	// left side
-				GLIB_drawLine(&glibContext, veh_shape.xMax + vehicle_x_position + 2, veh_shape.yMin,
-						veh_shape.xMax + vehicle_x_position, veh_shape.yMax);	// right side
-				GLIB_drawLine(&glibContext, veh_shape.xMax + vehicle_x_position, veh_shape.yMax,
-						veh_shape.xMin + vehicle_x_position, veh_shape.yMax);	// top
-				GLIB_drawLine(&glibContext, veh_shape.xMax + vehicle_x_position + 2, veh_shape.yMin,
-						veh_shape.xMin + vehicle_x_position + 2, veh_shape.yMin);	// bottom
-				break;
-			}
-			case(Hard_Left): {
-				if(vehicle_x_position > 4) {
-					vehicle_x_position -= 3;
-				}
-				// draw 4 lines to draw vehicle shape
-				GLIB_drawLine(&glibContext, veh_shape.xMin + vehicle_x_position + 4, veh_shape.yMin,
-						veh_shape.xMin + vehicle_x_position, veh_shape.yMax); 	// left side
-				GLIB_drawLine(&glibContext, veh_shape.xMax +vehicle_x_position + 4, veh_shape.yMin,
-						veh_shape.xMax + vehicle_x_position, veh_shape.yMax);	// right side
-				GLIB_drawLine(&glibContext, veh_shape.xMax + vehicle_x_position, veh_shape.yMax,
-						veh_shape.xMin + vehicle_x_position, veh_shape.yMax);	// top
-				GLIB_drawLine(&glibContext, veh_shape.xMax + vehicle_x_position + 4, veh_shape.yMin,
-						veh_shape.xMin + vehicle_x_position + 4, veh_shape.yMin);	// bottom
-				break;
-
-			}
-			case(Right): {
-				if(vehicle_x_position < (MAX_X - (veh_shape.xMax - veh_shape.xMin) - 2)) {
-					vehicle_x_position += 1;
-				}
-				// draw 4 lines to draw vehicle shape
-				GLIB_drawLine(&glibContext, veh_shape.xMin + vehicle_x_position - 2, veh_shape.yMin,
-						veh_shape.xMin + vehicle_x_position, veh_shape.yMax); 	// left side
-				GLIB_drawLine(&glibContext, veh_shape.xMax +vehicle_x_position - 2, veh_shape.yMin,
-						veh_shape.xMax + vehicle_x_position, veh_shape.yMax);	// right side
-				GLIB_drawLine(&glibContext, veh_shape.xMax + vehicle_x_position, veh_shape.yMax,
-						veh_shape.xMin + vehicle_x_position, veh_shape.yMax);	// top
-				GLIB_drawLine(&glibContext, veh_shape.xMax + vehicle_x_position - 2, veh_shape.yMin,
-						veh_shape.xMin + vehicle_x_position - 2, veh_shape.yMin);	// bottom
-				break;
-			}
-			case(Hard_Right): {
-				if(vehicle_x_position < (MAX_X - (veh_shape.xMax - veh_shape.xMin) - 4)) {
-					vehicle_x_position += 3;
-				}
-				// draw 4 lines to draw vehicle shape
-				GLIB_drawLine(&glibContext, veh_shape.xMin + vehicle_x_position - 4, veh_shape.yMin,
-						veh_shape.xMin + vehicle_x_position, veh_shape.yMax); 	// left side
-				GLIB_drawLine(&glibContext, veh_shape.xMax +vehicle_x_position - 4, veh_shape.yMin,
-						veh_shape.xMax + vehicle_x_position, veh_shape.yMax);	// right side
-				GLIB_drawLine(&glibContext, veh_shape.xMax + vehicle_x_position, veh_shape.yMax,
-						veh_shape.xMin + vehicle_x_position, veh_shape.yMax);	// top
-				GLIB_drawLine(&glibContext, veh_shape.xMax + vehicle_x_position - 4, veh_shape.yMin,
-						veh_shape.xMin + vehicle_x_position - 4, veh_shape.yMin);	// bottom
-				break;
-			}
-			case(Straight):
-			default: break;
+	switch(veh_dir.direction) {
+		case(Straight): {
+			GLIB_drawRect(&glibContext, &veh_shape);
+			break;
 		}
 
+		case(Left): {
+			// draw 4 lines to draw vehicle shape
+			GLIB_drawLine(&glibContext, veh_shape.xMin + 2, veh_shape.yMin,
+					veh_shape.xMin, veh_shape.yMax); 	// left side
+			GLIB_drawLine(&glibContext, veh_shape.xMax + 2, veh_shape.yMin,
+					veh_shape.xMax, veh_shape.yMax);	// right side
+			GLIB_drawLine(&glibContext, veh_shape.xMax, veh_shape.yMax,
+					veh_shape.xMin, veh_shape.yMax);	// top
+			GLIB_drawLine(&glibContext, veh_shape.xMax + 2, veh_shape.yMin,
+					veh_shape.xMin + 2, veh_shape.yMin);	// bottom
+			break;
+		}
+		case(Hard_Left): {
+			// draw 4 lines to draw vehicle shape
+			GLIB_drawLine(&glibContext, veh_shape.xMin + 4, veh_shape.yMin,
+					veh_shape.xMin, veh_shape.yMax); 	// left side
+			GLIB_drawLine(&glibContext, veh_shape.xMax + 4, veh_shape.yMin,
+					veh_shape.xMax, veh_shape.yMax);	// right side
+			GLIB_drawLine(&glibContext, veh_shape.xMax, veh_shape.yMax,
+					veh_shape.xMin, veh_shape.yMax);	// top
+			GLIB_drawLine(&glibContext, veh_shape.xMax + 4, veh_shape.yMin,
+					veh_shape.xMin + 4, veh_shape.yMin);	// bottom
+			break;
+
+		}
+		case(Right): {
+			// draw 4 lines to draw vehicle shape
+			GLIB_drawLine(&glibContext, veh_shape.xMin - 2, veh_shape.yMin,
+					veh_shape.xMin, veh_shape.yMax); 	// left side
+			GLIB_drawLine(&glibContext, veh_shape.xMax - 2, veh_shape.yMin,
+					veh_shape.xMax, veh_shape.yMax);	// right side
+			GLIB_drawLine(&glibContext, veh_shape.xMax, veh_shape.yMax,
+					veh_shape.xMin, veh_shape.yMax);	// top
+			GLIB_drawLine(&glibContext, veh_shape.xMax - 2, veh_shape.yMin,
+					veh_shape.xMin - 2, veh_shape.yMin);	// bottom
+			break;
+		}
+		case(Hard_Right): {
+			// draw 4 lines to draw vehicle shape
+			GLIB_drawLine(&glibContext, veh_shape.xMin - 4, veh_shape.yMin,
+					veh_shape.xMin, veh_shape.yMax); 	// left side
+			GLIB_drawLine(&glibContext, veh_shape.xMax - 4, veh_shape.yMin,
+					veh_shape.xMax, veh_shape.yMax);	// right side
+			GLIB_drawLine(&glibContext, veh_shape.xMax, veh_shape.yMax,
+					veh_shape.xMin, veh_shape.yMax);	// top
+			GLIB_drawLine(&glibContext, veh_shape.xMax - 4, veh_shape.yMin,
+					veh_shape.xMin - 4, veh_shape.yMin);	// bottom
+			break;
+		}
+		default: break;
 	}
 }
 
-void gameplay_calculate_vehicle_shape(Vehicle_t veh, GLIB_Rectangle_t * veh_shape) {
-	veh_shape->xMax = (int32_t)veh.width;
-	veh_shape->xMin = vehicle_x_position - 1;
-	veh_shape->yMin = MAX_Y - 1;
-	veh_shape->yMax = veh_shape->yMin - veh.length;
+void gameplay_calculate_vehicle_shape(Vehicle_t * veh) { //, GLIB_Rectangle_t * veh_shape) {
+
+	veh->shape.xMax = CENTER_X + ((int32_t)veh->characteristics.width / 2);
+	veh->shape.xMin = CENTER_X - ((int32_t)veh->characteristics.width / 2);;
+	veh->shape.yMin = MAX_Y - 1;
+	veh->shape.yMax = veh->shape.yMin - veh->characteristics.length;
 }
 
 
 /*
+ * 	1. Generate pylons
+ * 	Convert current scope of waypoints to pixel midpoints
+ * 	2. Apply Bezier to 4 data points at a time
+ * 		2a. Save the 10 generated points
+ * 		2b. Connect these 10 new points together using GLIB_drawLine()
+ *
  * @return true if last waypoint has been reached
  */
-bool gameplay_draw_track(Vehicle_t veh, Track_t track, Speed_t veh_speed) {
-//	static bool initialized = false;
-//	static uint32_t remaining_waypoints;
-//	static uint8_t current_waypoints[3][2];
+bool gameplay_draw_track(Vehicle_t veh, Track_t * track, Speed_t veh_speed) {
+	uint8_t i;
+	Waypoint_t temp[4];
+	Waypoint_t pylons[30];
+//	Midpoint_Pixel_t midpoints[10];
 
-//	uint8_t i;
-//	for(i = 0; i < 4; i++) {
-//		switch(track.waypoints[track.index + i].turn) {
-//			case(Right_Turn):
-//			case(Slight_Right_Turn):
-//			case(Hard_Right_Turn): {
-//				GLIB_drawLine(&glibContext,
-//					CENTER_X - (TRACK_PYLON_WIDTH / 2) + RIGHT_TURN_ROAD_OFFSET,
-////					vehicle_shape_graphic.yMax - ((i+1) * TRACK_PYLON_DISTANCE),
-//					vehicle_shape_graphic.yMax - track.waypoints[track.index + i].distance_marker - track.index * TRACK_PYLON_DISTANCE,
-//					CENTER_X + (TRACK_PYLON_WIDTH / 2) + RIGHT_TURN_ROAD_OFFSET,
-//					vehicle_shape_graphic.yMax - track.waypoints[track.index + i].distance_marker);
-////					vehicle_shape_graphic.yMax - ((i+1) * TRACK_PYLON_DISTANCE));
-//				break;
-//
-//			}
-//			case(Left_Turn):
-//			case(Slight_Left_Turn):
-//			case(Hard_Left_Turn): {
-//				GLIB_drawLine(&glibContext,
-//					CENTER_X - (TRACK_PYLON_WIDTH / 2) - LEFT_TURN_ROAD_OFFSET,
-////					vehicle_shape_graphic.yMax - ((i+1) * TRACK_PYLON_DISTANCE),
-//					vehicle_shape_graphic.yMax - track.waypoints[track.index + i].distance_marker,
-//					CENTER_X + (TRACK_PYLON_WIDTH / 2) - LEFT_TURN_ROAD_OFFSET,
-////					vehicle_shape_graphic.yMax - ((i+1) * TRACK_PYLON_DISTANCE));
-//					vehicle_shape_graphic.yMax - track.waypoints[track.index + i].distance_marker);
-//				break;
-//			}
-//			case(Straight_Turn):
-//			default: {
-//				GLIB_drawLine(&glibContext,
-//					CENTER_X - (TRACK_PYLON_WIDTH / 2),
-////					vehicle_shape_graphic.yMax - ((i+1) * TRACK_PYLON_DISTANCE) - 2,
-//					vehicle_shape_graphic.yMax - track.waypoints[track.index + i].distance_marker,
-//					CENTER_X + (TRACK_PYLON_WIDTH / 2),
-////					vehicle_shape_graphic.yMax - ((i+1) * TRACK_PYLON_DISTANCE) - 2);
-//					vehicle_shape_graphic.yMax - track.waypoints[track.index + i].distance_marker);
-//				break;
-//			}
-//		}
-//	}
-//	return false;
-
-	static uint8_t x_start;
-	x_start = (CENTER_X - (TRACK_PYLON_WIDTH / 2));
-	static uint8_t y_start;
-
-	y_start = MAX_Y;
-
-	if(track.waypoints[track.index].distance_marker < track.meters) {
-		uint8_t i;
-		for(i = 0; i < 6; i++) {
-			gameplay_connect_waypoints(&x_start, &y_start, track.waypoints[track.index + i].turn);
+	uint8_t times;
+	for(times = 0; times < 3; times++) {	// do 8 points
+		for(i = 0; i < 4; i++) {
+			temp[i] = track->waypoints[track->index + i + (times * 3)];
 		}
 
-		// see if index needs to be updated
-//		if(veh.distance_covered > track.waypoints[track.index].distance_marker) {
-//			track.waypoints[track.index].distance_marker++;
-//		}
-		if(veh.distance_covered > track.waypoints[track.index].distance_marker) {
-			track.index++;
+		bezierCurve(temp, pylons);
+
+		for(i = 0; i < 11; i++) {
+			if(convert_coords_to_pixel(&track->midpoints[i + (times * 11)], veh.position, pylons[i].x, pylons[i].y)) {
+				break;
+			}
+
+		}
+
+			// draw graphic
+		int8_t j;
+		for(j = i-1; j > 0; j--) {
+			GLIB_drawLine(&glibContext,
+					track->midpoints[j + (times * 11)].x - (TRACK_PYLON_WIDTH / 2),
+					track->midpoints[j + (times * 11)].y,
+					track->midpoints[j + (times * 11) - 1].x - (TRACK_PYLON_WIDTH / 2),
+					track->midpoints[j + (times * 11) - 1].y);
+
+			GLIB_drawLine(&glibContext,
+					track->midpoints[j + (times * 11)].x + (TRACK_PYLON_WIDTH / 2),
+					track->midpoints[j + (times * 11)].y,
+					track->midpoints[j + (times * 11) - 1].x + (TRACK_PYLON_WIDTH / 2),
+					track->midpoints[j + (times * 11) - 1].y);
 		}
 	}
-	else {
-//		uint8_t i;
-//		for(i = 0; i < (track.num_waypoints - track.index); i++) {
-//			gameplay_connect_waypoints(&x_start, &y_start, track.waypoints[track.index + i].turn);
-//		}
-//
-//		// see if index needs to be updated
-//		if(veh.distance_covered > track.waypoints[track.index].distance_marker) {
-//			track.waypoints[track.index].distance_marker++;
-//		}
-		return true;
-	}
-
-//	gameplay_connect_waypoints(&x_start, &y_start, Straight_Turn);
-//	gameplay_connect_waypoints(&x_start, &y_start, Straight_Turn);
-//	gameplay_connect_waypoints(&x_start, &y_start, Right_Turn);
-//	gameplay_connect_waypoints(&x_start, &y_start, Straight_Turn);
-//	gameplay_connect_waypoints(&x_start, &y_start, Left_Turn);
-//	gameplay_connect_waypoints(&x_start, &y_start, Slight_Right_Turn);
-
-    return false;
+	return false;
 }
-
-void gameplay_connect_waypoints(uint8_t * x_left_start, uint8_t * y_start, eTurnType turn_type) {
-	uint8_t y_end = *y_start - TRACK_PYLON_DISTANCE;
-
-	if(y_end < HUD_Y_LINE) {
-		y_end = HUD_Y_LINE;
-	}
-
-	// left line
-	GLIB_drawLine(&glibContext,
-			*x_left_start,
-			*y_start,
-			*x_left_start + turn_type,
-			y_end);
-
-	// right line
-	GLIB_drawLine(&glibContext,
-			*x_left_start + TRACK_PYLON_WIDTH,
-			*y_start,
-			*x_left_start + TRACK_PYLON_WIDTH + turn_type,
-			y_end);
-
-	*x_left_start += turn_type;
-	*y_start -= TRACK_PYLON_DISTANCE;
-}
-
 
 uint32_t gameplay_calculate_mph_from_ms(Speed_t veh_speed) {
 	return (uint32_t)((float)veh_speed.speed * 2.23694);
+}
+
+void bezierCurve(Waypoint_t midpoints[], Waypoint_t * new_points) {
+	double xu = 0.0 , yu = 0.0 , u = 0.0;
+	uint8_t i = 0;
+	for(u = 0.0 ; u <= 1.0 ; u += 0.1) {
+		xu = pow(1-u,3) * midpoints[0].x + 3 * u * pow(1-u,2) * midpoints[1].x + 3 * pow(u,2) * (1-u) * midpoints[2].x + pow(u,3) * midpoints[3].x;
+		yu = pow(1-u,3) * midpoints[0].y + 3 * u * pow(1-u,2) * midpoints[1].y + 3 * pow(u,2) * (1-u) * midpoints[2].y + pow(u,3) * midpoints[3].y;
+//		printf("X: %f\tY: %f\n", xu , yu);
+		new_points[i].x = (uint8_t)(xu + 0.5);
+		new_points[i].y = (uint8_t)(yu + 0.5);
+		i++;
+	}
 }
 
 //***********************************************************************************
@@ -1037,7 +961,7 @@ void gameover_print_header_inverse(void) {
 //***********************************************************************************
 // highscore
 //***********************************************************************************
-void high_score_display(void) {
+void high_score_display(High_Score_List_t list) {
 	glibContext.backgroundColor = White;
 	glibContext.foregroundColor = Black;
 
@@ -1075,16 +999,15 @@ void high_score_display(void) {
 
 	// display high scores
 	uint8_t i;
-	for(i = 5; i < 15; i++) {
-		high_score_display_place(i);
+	for(i = 0; i < list.num_entries; i++) {
+		high_score_display_place(i + 1, list.best_time[i]);
 	}
-
 }
 
-void high_score_display_place(uint8_t place) {
+void high_score_display_place(uint8_t place, uint32_t score) {
 	char str[DISPLAY_MAX_STR_LEN];
 	char str_place[3];
-	__itoa(place - 4, str_place, 10);
+	__itoa(place, str_place, 10);
 
 	strcat(str_place, ":");
 
@@ -1094,14 +1017,17 @@ void high_score_display_place(uint8_t place) {
 				  str,
 				  strlen(str),
 				  MIN_X + 10,
-				  (place * GLIB_FONT_HEIGHT),
+				  ((place + 5) * GLIB_FONT_HEIGHT),
 				  0);
 
-	snprintf(str, DISPLAY_MAX_STR_LEN, "90");
+	char str_score[5];
+	__itoa(score, str_score, 10);	// base 10
+
+	snprintf(str, DISPLAY_MAX_STR_LEN, str_score);
 	GLIB_drawString(&glibContext,
 				  str,
 				  strlen(str),
 				  MAX_X - 50,
-				  (place * GLIB_FONT_HEIGHT),
+				  ((place + 5) * GLIB_FONT_HEIGHT),
 				  0);
 }

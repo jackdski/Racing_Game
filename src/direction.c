@@ -12,8 +12,7 @@
 
 /*  G L O B A L   V A R I A B L E S   */
 extern eSystemState system_state;
-//extern eAutopilotState autopilot_state;
-//extern Speed_t Vehicle_Speed;
+extern Speed_t Vehicle_Speed;
 extern Direction_t Vehicle_Direction;
 
 
@@ -21,6 +20,7 @@ extern Direction_t Vehicle_Direction;
 //extern SemaphoreHandle_t semButton;
 extern SemaphoreHandle_t mDirectionData;
 extern SemaphoreHandle_t mSystemState;
+extern SemaphoreHandle_t mSpeedData;
 //extern SemaphoreHandle_t mAutopilotState;
 
 
@@ -29,36 +29,26 @@ TaskHandle_t thLEDTask;
 TaskHandle_t thLCDDisplay;
 
 /*  P R I V A T E   V A R I A B L E S   */
-
+static eSystemState sys_state;
+static TimerHandle_t sys_state_timer;
 
 /*	T A S K   */
 
 void DirectionTask(void * pvParameters) {
-	const TickType_t delay_time = pdMS_TO_TICKS(50);
-
-	static eSystemState sys_state;
-//	static eAutopilotState ap_state;
+	const TickType_t delay_time = pdMS_TO_TICKS(200);
 
 	static uint8_t capsense_pos;
 	eDirection direction = Straight;
 	int8_t angle;
-//	eDirection old_direction = Straight;
+
+	sys_state_timer = xTimerCreate("sys state Timer", pdMS_TO_TICKS(400), pdTRUE, (void*)0, tmr_get_system_state);
+	xTimerStart(sys_state_timer, 10);
 
 	// init
 	CAPSENSE_Init();	// initialize hardware
 
 	while(1) {
 		capsense_pos = get_capsense_position();
-
-		// Get system state
-		xSemaphoreTake(mSystemState, 0);
-		sys_state = system_state;
-		xSemaphoreGive(mSystemState);
-
-		// Get autopilot state
-//		xSemaphoreTake(mAutopilotState, 0);
-//		ap_state = autopilot_state;
-//		xSemaphoreGive(mAutopilotState);
 
 		switch(sys_state) {
 			case(Startup): {
@@ -87,21 +77,39 @@ void DirectionTask(void * pvParameters) {
 			}
 			case(Gameplay): {
 				// update direction based on latest sample
+				uint32_t speed;
+				if(xSemaphoreTake(mSpeedData, 30)) {
+					speed = Vehicle_Speed.speed;
+					xSemaphoreGive(mSpeedData);
+				}
 				switch(capsense_pos) {
-					case(1): direction = Hard_Left; angle = -60; break;
-					case(2): direction = Left; 		angle = -30; break;
-					case(3): direction = Right; 	angle =  30; break;
-					case(4): direction = Hard_Right; angle = 60; break;
-					default: direction = Straight; 	angle = 0; break;
+					case(1): direction = Hard_Left;  angle =  45.0; break;
+					case(2): direction = Left; 		 angle =  15.0; break;
+					case(3): direction = Right;		 angle = -15.0; break;
+					case(4): direction = Hard_Right; angle = -45.0; break;
+					default: direction = Straight; 	 angle =   0.0; break;
 				}
 
-				xSemaphoreTake(mDirectionData, 10); 		// get mutex
+				xSemaphoreTake(mDirectionData, 30);
 				Vehicle_Direction.direction = direction; 	// update global variable
-				Vehicle_Direction.angle = angle;
-				xSemaphoreGive(mDirectionData);  			// release mutex
+				if(speed > 0) {
+					Vehicle_Direction.angle += angle;
+				}
+				if(Vehicle_Direction.angle > 360.0) {
+					Vehicle_Direction.angle -= 360.0;
+				}
+				else if(Vehicle_Direction.angle < 0.0) {
+					Vehicle_Direction.angle += 360;
+				}
+				xSemaphoreGive(mDirectionData);
 				break;
 			}
 			case(GameOver): {
+				xSemaphoreTake(mDirectionData, 10);
+				Vehicle_Direction.direction = Straight;
+				Vehicle_Direction.position = 0;
+				Vehicle_Direction.angle = 0.0;
+				xSemaphoreGive(mDirectionData);
 				break;
 			}
 			case(HighScore): {
@@ -110,6 +118,13 @@ void DirectionTask(void * pvParameters) {
 		}
 		vTaskDelay(delay_time);
 	}
+}
+
+void tmr_get_system_state(TimerHandle_t xTimer) {
+	// Get system state
+	xSemaphoreTake(mSystemState, 100);
+	sys_state = system_state;
+	xSemaphoreGive(mSystemState);
 }
 
 
