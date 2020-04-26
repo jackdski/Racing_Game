@@ -37,13 +37,9 @@ static TimerHandle_t sys_state_timer;
 void DirectionTask(void * pvParameters) {
 	const TickType_t delay_time = pdMS_TO_TICKS(200);
 
-//	static eSystemState sys_state;
-//	static eAutopilotState ap_state;
-
 	static uint8_t capsense_pos;
 	eDirection direction = Straight;
 	int8_t angle;
-//	eDirection old_direction = Straight;
 
 	sys_state_timer = xTimerCreate("sys state Timer", pdMS_TO_TICKS(400), pdTRUE, (void*)0, tmr_get_system_state);
 	xTimerStart(sys_state_timer, 10);
@@ -87,10 +83,10 @@ void DirectionTask(void * pvParameters) {
 					xSemaphoreGive(mSpeedData);
 				}
 				switch(capsense_pos) {
-					case(1): direction = Hard_Left;  angle =  30.0; break;
+					case(1): direction = Hard_Left;  angle =  45.0; break;
 					case(2): direction = Left; 		 angle =  15.0; break;
 					case(3): direction = Right;		 angle = -15.0; break;
-					case(4): direction = Hard_Right; angle = -30.0; break;
+					case(4): direction = Hard_Right; angle = -45.0; break;
 					default: direction = Straight; 	 angle =   0.0; break;
 				}
 

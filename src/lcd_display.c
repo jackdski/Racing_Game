@@ -53,6 +53,8 @@ static TimerHandle_t 	highscore_timer;
 //static GLIB_Rectangle_t vehicle_shape_graphic;
 static uint16_t 		vehicle_x_position;
 //static VehPosition_t 	vehicle_position;
+static GLIB_Context_t   glibContext;
+
 
 /*	T A S K   */
 
@@ -142,7 +144,7 @@ void DisplayTask(void * pvParameters) {
 
 
 							xSemaphoreTake(mTrack, 10);
-							cpy_track_settings = track_settings;
+							track_settings = cpy_track_settings;
 							set_track(&track, track_settings.track);
 							vehicle.position.x = track.waypoints[0].x;
 							vehicle.position.y = track.waypoints[0].y;
@@ -268,11 +270,15 @@ void DisplayTask(void * pvParameters) {
 				break;
 			}
 			case(GameOver): {
+				// stop gameplay timer
 				stop_high_score_timer();
+
+				// suspend Vehicle Monitor Task
 				if(eTaskGetState(thVehMon) != (eSuspended)) {
 					vTaskSuspend(thVehMon);
 				}
 
+				// Change "Game Over" display
 				static bool inverse = false;
 				if(inverse == true) {
 					gameover_print_header_inverse();
@@ -310,6 +316,7 @@ void DisplayTask(void * pvParameters) {
 						sys_state = system_state;
 						xSemaphoreGive(mSystemState);
 					}
+					xTaskNotifyStateClear(thLCDDisplay);
 				}
 
 				break;
@@ -866,28 +873,11 @@ bool gameplay_draw_track(Vehicle_t veh, Track_t * track, Speed_t veh_speed) {
 	for(times = 0; times < 3; times++) {	// do 8 points
 		for(i = 0; i < 4; i++) {
 			temp[i] = track->waypoints[track->index + i + (times * 3)];
-//			if(times == 1) {
-//				temp[i] = track->waypoints[track->index + i];
-//			}
-//			else if(times == 2) {
-//				temp[i] = track->waypoints[track->index + i + 3];
-//			}
 		}
 
 		bezierCurve(temp, pylons);
 
 		for(i = 0; i < 11; i++) {
-//			if(times == 1) {
-//				if(convert_coords_to_pixel(&track->midpoints[i + (times * 11)], veh.position, pylons[i].x, pylons[i].y)) {
-//					break;
-//				}
-//			}
-//			else if(times == 2) {
-//				if(convert_coords_to_pixel(&track->midpoints[(i + 11)], veh.position, pylons[i].x, pylons[i].y)) {
-//					i += 10;
-//					break;
-//				}
-//			}
 			if(convert_coords_to_pixel(&track->midpoints[i + (times * 11)], veh.position, pylons[i].x, pylons[i].y)) {
 				break;
 			}

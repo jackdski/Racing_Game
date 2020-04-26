@@ -19,7 +19,7 @@
 #include "timers.h"
 
 /* C O N S T A N T S */
-static GLIB_Context_t   glibContext;
+//static GLIB_Context_t   glibContext;
 
 #define MAX_X 					(glibContext.pDisplayGeometry->xSize - 1)
 #define MAX_Y 					(glibContext.pDisplayGeometry->ySize - 1)

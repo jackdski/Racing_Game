@@ -198,7 +198,7 @@ void SpeedTask(void * pvParameters) {
 				xSemaphoreTake(mTrack, 10);
 				float xdiff = track.waypoints[track.index].x - track.waypoints[track.index + 1].x;
 				float ydiff = track.waypoints[track.index].y - track.waypoints[track.index + 1].y;
-				float distance = sqrt(xdiff * xdiff  + ydiff * ydiff);
+//				float distance = sqrt(xdiff * xdiff  + ydiff * ydiff);
 
 				xSemaphoreGive(mVehicleData);
 				xSemaphoreGive(mTrack);

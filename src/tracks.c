@@ -101,8 +101,7 @@ static Waypoint_t test_track_waypoints[75] = {
 		{99.0, 59.0}
 };
 
-/*
-static uint8_t spa_belgium_waypoints[][50] = {
+static Waypoint_t spa_belgium_waypoints[50] = {
 		{100,50},
 		{98, 48},
 		{96, 46},
@@ -154,40 +153,59 @@ static uint8_t spa_belgium_waypoints[][50] = {
 		{98, 48},
 		{100,50},
 };
-*/
+
+static Waypoint_t sparseR_waypoints[17] = {
+		{0, 0},
+		{4, 2},
+		{6, 3},
+		{10, 5},
+		{15, 8},
+		{17, 10},
+		{20, 0},
+		{50, 10},
+		{80, 5},
+		{130, 20},
+		{135, 110},
+		{135, 190},
+		{170, 225},
+		{205, 210},
+		{205, 190},
+		{150, 100},
+		{165, 50},
+		{200, 40},
+		{210, 38},
+		{230, 39}
+};
+
 
 void init_tracks(void) {
 	// Test Track
 	strcpy(test_track.name, "Test Track");
-	test_track.num_waypoints=  75;
-	test_track.meters 		= test_track.num_waypoints * 10;
-	test_track.index 		= 	1;
-	test_track.waypoints	= test_track_waypoints;
+	test_track.num_waypoints		=  75;
+	test_track.meters 				= test_track.num_waypoints * 10;
+	test_track.index 				= 1;
+	test_track.waypoints			= test_track_waypoints;
 
 	// SPA, Belgium
 	strcpy(spa_belgium_track.name, "SPA, Belgium");
-	spa_belgium_track.num_waypoints = 50;
-	spa_belgium_track.meters = spa_belgium_track.num_waypoints * 10;
+	spa_belgium_track.num_waypoints = 17;
+	spa_belgium_track.meters 		= spa_belgium_track.num_waypoints * 10;
 	spa_belgium_track.index 		= 0;
-	spa_belgium_track.waypoints 	= pvPortMalloc(sizeof(test_track_waypoints));
-	memcpy(&spa_belgium_track.waypoints, &test_track_waypoints, sizeof(test_track_waypoints));
+	spa_belgium_track.waypoints 	= sparseR_waypoints;
 
 	// Monaco
 	strcpy(monaco_track.name, "Monaco");
-	monaco_track.num_waypoints 	= 50;
-	monaco_track.meters = monaco_track.num_waypoints * 10;
-	monaco_track.index 			= 0;
-	monaco_track.waypoints 		= pvPortMalloc(sizeof(test_track_waypoints));
-	memcpy(&monaco_track.waypoints, &test_track_waypoints, sizeof(test_track_waypoints));
+	monaco_track.num_waypoints 		= 17;
+	monaco_track.meters 			= monaco_track.num_waypoints * 10;
+	monaco_track.index 				= 0;
+	monaco_track.waypoints 			= sparseR_waypoints;
 
 	// Melbourne
 	strcpy(melbourne_track.name, "Melbourne");
-	melbourne_track.num_waypoints = 50;
-	melbourne_track.meters = melbourne_track.num_waypoints * 10;
+	melbourne_track.num_waypoints 	= 50;
+	melbourne_track.meters 			= melbourne_track.num_waypoints * 10;
 	melbourne_track.index 			= 0;
-	melbourne_track.waypoints 		= pvPortMalloc(sizeof(test_track_waypoints));
-	memcpy(&melbourne_track.waypoints, &test_track_waypoints, sizeof(test_track_waypoints));
-
+	melbourne_track.waypoints 		= test_track_waypoints;
 }
 
 void set_track(Track_t * set_track, eGrandPrix track_name) {
@@ -197,10 +215,26 @@ void set_track(Track_t * set_track, eGrandPrix track_name) {
 			memcpy(set_track->waypoints, test_track.waypoints, sizeof(test_track.waypoints));
 			break;
 		}
-		case(SPA): 	  	 *set_track = test_track; break;
-		case(Monaco): 	 *set_track = test_track; break;
-		case(Melbourne): *set_track = test_track; break;
-		default: 		 *set_track = test_track; break;
+		case(SPA): {
+			*set_track = spa_belgium_track;
+			memcpy(set_track->waypoints, spa_belgium_track.waypoints, sizeof(spa_belgium_track.waypoints));
+			break;
+		}
+		case(Monaco): {
+			*set_track = monaco_track;
+			memcpy(set_track->waypoints, monaco_track.waypoints, sizeof(monaco_track.waypoints));
+			break;
+		}
+		case(Melbourne): {
+			*set_track = melbourne_track;
+			memcpy(set_track->waypoints, melbourne_track.waypoints, sizeof(melbourne_track.waypoints));
+			break;
+		}
+		default: {
+			*set_track = test_track;
+			configASSERT(false);
+			break;
+		}
 	}
 }
 
@@ -209,10 +243,9 @@ bool convert_coords_to_pixel(Midpoint_Pixel_t * midpoint, Position_t position, f
 	float pylon[2] = {x - position.x, y - position.y};
 	float rotate[2] = {pylon[0] / SCREEN_SIZE_METERS_X, pylon[1] / SCREEN_SIZE_METERS_Y};
 
-	float px = ((0.5 + rotate[0]) * 128) + 0.5;
-	float py = 128 - (rotate[1] * 128) + 0.5;
+	float px = ((0.5 + rotate[0]) * 128);
+	float py = 128 - fabs(rotate[1] * 128);
 //	float py = (rotate[1] * 128);
-
 
 	midpoint->x = (uint8_t)px;
 	midpoint->y = (uint8_t)py;
@@ -236,7 +269,9 @@ float find_starting_angle(Track_t track) {
 	b[0] = track.waypoints[1].x;
 	b[1] = track.waypoints[1].y;
 
-	float c[2] = {track.waypoints[0].x, a[1] + 10};
+//	float c[2] = {track.waypoints[0].x, a[1] + 10};
+	float c[2] = {a[0], a[1] + 10};
+
 
     uint32_t a2 = length_square(b[0], b[1], c[0], c[1]);
     uint32_t b2 = length_square(a[0], a[1], c[0], c[1]);
@@ -246,13 +281,23 @@ float find_starting_angle(Track_t track) {
     float lb = sqrt(b2);
     float lc = sqrt(c2);
 
-//    // From Cosine law
-    float alpha = acos((b2 + c2 - a2)/(2* lb * lc));
+    float alpha;
 
-    // Converting to degree
-    alpha = alpha * 180 / PI;
-//    betta = betta * 180 / PI;
-//    gamma = gamma * 180 / PI;
+    // check if no triangle is formed
+    if(a[0] == b[0]) {		// x-coordinates are the same
+    	alpha = 0.0;
+    }
+    else if(a[1] == b[1]) {		// y-coordinates are the same
+    	alpha = 90.0;
+    }
+    else {
+        // From Cosine law
+        alpha = acos((b2 + c2 - a2)/(2* lb * lc));
+        // Converting to degree
+        alpha = alpha * 180 / PI;
+		//    betta = betta * 180 / PI;
+		//    gamma = gamma * 180 / PI;
+    }
 
     if(track.waypoints[1].x > track.waypoints[0].x && track.waypoints[1].y > track.waypoints[0].y) {
     	alpha += 270;

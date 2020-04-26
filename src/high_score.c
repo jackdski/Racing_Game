@@ -54,7 +54,9 @@ void start_high_score_timer(void) {
 }
 
 void stop_high_score_timer(void) {
-	xTimerStop(high_score_timer, 0);
+	if(xTimerIsTimerActive(high_score_timer) == pdTRUE) {
+		xTimerStop(high_score_timer, 0);
+	}
 }
 
 float get_high_score_timer_value(void) {

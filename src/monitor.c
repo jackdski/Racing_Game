@@ -75,7 +75,7 @@ void VehicleMonitorTask(void * pvParameters) {
 						track.index++;
 					}
 
-					// TODO: check if offroad
+					// check if off-road
 					uint8_t i;
 					for(i = 0; i < 6; i++) {
 						uint8_t width_adj = (128 / 3 / 2);
