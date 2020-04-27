@@ -21,7 +21,7 @@
 
 /* C O N S T A N T S */
 
-#define SPEED_UPDATE_GAMEPLAY		300		// [ms]
+#define SPEED_UPDATE_GAMEPLAY		500// 300		// [ms]
 #define DISTANCE_UPDATE_GAMEPLAY	0.3		// [s]
 
 #define ACCELERATOR_CHANGE		0.05

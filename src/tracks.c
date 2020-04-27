@@ -22,6 +22,8 @@ static Track_t spa_belgium_track;
 static Track_t monaco_track;
 static Track_t melbourne_track;
 
+static Waypoint_t test_track_pylons[300];
+
 // Tracks
 static Waypoint_t test_track_waypoints[75] = {
 		{99.0, 41.0},
@@ -151,10 +153,10 @@ static Waypoint_t spa_belgium_waypoints[50] = {
 		{94, 44},
 		{96, 46},
 		{98, 48},
-		{100,50},
+		{100,50}
 };
 
-static Waypoint_t sparseR_waypoints[17] = {
+static Waypoint_t sparseR_waypoints[20] = {
 		{0, 0},
 		{4, 2},
 		{6, 3},
@@ -181,10 +183,12 @@ static Waypoint_t sparseR_waypoints[17] = {
 void init_tracks(void) {
 	// Test Track
 	strcpy(test_track.name, "Test Track");
-	test_track.num_waypoints		=  75;
+	test_track.num_waypoints		=  249;
 	test_track.meters 				= test_track.num_waypoints * 10;
-	test_track.index 				= 1;
+	test_track.index 				= 0;
 	test_track.waypoints			= test_track_waypoints;
+	generate_pylons(&test_track, &test_track_pylons);
+	test_track.pylons = test_track_pylons;
 
 	// SPA, Belgium
 	strcpy(spa_belgium_track.name, "SPA, Belgium");
@@ -213,6 +217,7 @@ void set_track(Track_t * set_track, eGrandPrix track_name) {
 		case(Test): {
 			*set_track = test_track;
 			memcpy(set_track->waypoints, test_track.waypoints, sizeof(test_track.waypoints));
+			set_track->pylons = test_track_pylons;
 			break;
 		}
 		case(SPA): {
@@ -238,12 +243,40 @@ void set_track(Track_t * set_track, eGrandPrix track_name) {
 	}
 }
 
+void generate_pylons(Track_t * track, Waypoint_t * pylons) {
+//	track->pylons = pylons;
+	int index;
+	int pylon_index = 0;
+	for (index = 0; index < track->num_waypoints; index += 3) {
+		int current_index;
+		Waypoint_t temp_midpoints[4];
+		for(current_index = 0; current_index < 4; current_index++) {
+			if(index + current_index >= track->num_waypoints - 1) {
+				temp_midpoints[current_index] = track->waypoints[track->num_waypoints - 1];
+			}
+			else {
+				temp_midpoints[current_index] = track->waypoints[index + current_index];
+			}
+		}
+
+		Waypoint_t new_pylons[11];
+		bezierCurve(temp_midpoints, new_pylons);
+
+		int i_pylon;
+		for(i_pylon = 0; i_pylon < 10; i_pylon++) {
+			pylons[pylon_index] = new_pylons[i_pylon];
+			pylon_index++;
+		}
+	}
+}
+
 
 bool convert_coords_to_pixel(Midpoint_Pixel_t * midpoint, Position_t position, float x, float y) {
 	float pylon[2] = {x - position.x, y - position.y};
 	float rotate[2] = {pylon[0] / SCREEN_SIZE_METERS_X, pylon[1] / SCREEN_SIZE_METERS_Y};
 
 	float px = ((0.5 + rotate[0]) * 128);
+//	float px = ((0.5 - rotate[0]) * 128);
 	float py = 128 - fabs(rotate[1] * 128);
 //	float py = (rotate[1] * 128);
 
@@ -270,7 +303,7 @@ float find_starting_angle(Track_t track) {
 	b[1] = track.waypoints[1].y;
 
 //	float c[2] = {track.waypoints[0].x, a[1] + 10};
-	float c[2] = {a[0], a[1] + 10};
+	float c[2] = {a[0], a[1] + 100};
 
 
     uint32_t a2 = length_square(b[0], b[1], c[0], c[1]);

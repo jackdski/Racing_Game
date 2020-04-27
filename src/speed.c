@@ -40,7 +40,7 @@ static TimerHandle_t accelerator_distance_timer;
 /*	T A S K   */
 
 void SpeedTask(void * pvParameters) {
-	uint8_t delay_ms = 50;
+	uint8_t delay_ms = 100;
 	const TickType_t delay_time = pdMS_TO_TICKS(delay_ms);
 	const TickType_t config_delay_time = pdMS_TO_TICKS(200);
 	const TickType_t timer_period = pdMS_TO_TICKS(1000);
@@ -370,6 +370,11 @@ void update_vehicle_position(Vehicle_t * veh, uint32_t speed, Direction_t veh_di
 	switch(quadrant) {
 		case(1): {
 			dx = -dx;
+
+//			float temp;
+//			temp = dx;
+//			dy = dx;
+//			dx = -dy;
 			break;
 		}
 		case(2): {

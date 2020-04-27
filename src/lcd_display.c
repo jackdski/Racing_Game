@@ -348,6 +348,9 @@ void DisplayTask(void * pvParameters) {
 		if(sys_state == GetReady) {
 			vTaskDelay(countdown_delay);
 		}
+		else if(sys_state == GameOver) {
+			vTaskDelay(pdMS_TO_TICKS(100));
+		}
 		else {
 			vTaskDelay(refresh_rate);
 		}
@@ -865,41 +868,34 @@ void gameplay_calculate_vehicle_shape(Vehicle_t * veh) { //, GLIB_Rectangle_t * 
  */
 bool gameplay_draw_track(Vehicle_t veh, Track_t * track, Speed_t veh_speed) {
 	uint8_t i;
-	Waypoint_t temp[4];
-	Waypoint_t pylons[30];
-//	Midpoint_Pixel_t midpoints[10];
-
-	uint8_t times;
-	for(times = 0; times < 3; times++) {	// do 8 points
-		for(i = 0; i < 4; i++) {
-			temp[i] = track->waypoints[track->index + i + (times * 3)];
+	bool found_end = false;
+	for(i = 0; i < 30; i++) {
+		if((track->index + i) > track->num_waypoints) {
+			found_end = true;
+			break;
 		}
-
-		bezierCurve(temp, pylons);
-
-		for(i = 0; i < 11; i++) {
-			if(convert_coords_to_pixel(&track->midpoints[i + (times * 11)], veh.position, pylons[i].x, pylons[i].y)) {
-				break;
-			}
-
-		}
-
-			// draw graphic
-		int8_t j;
-		for(j = i-1; j > 0; j--) {
-			GLIB_drawLine(&glibContext,
-					track->midpoints[j + (times * 11)].x - (TRACK_PYLON_WIDTH / 2),
-					track->midpoints[j + (times * 11)].y,
-					track->midpoints[j + (times * 11) - 1].x - (TRACK_PYLON_WIDTH / 2),
-					track->midpoints[j + (times * 11) - 1].y);
-
-			GLIB_drawLine(&glibContext,
-					track->midpoints[j + (times * 11)].x + (TRACK_PYLON_WIDTH / 2),
-					track->midpoints[j + (times * 11)].y,
-					track->midpoints[j + (times * 11) - 1].x + (TRACK_PYLON_WIDTH / 2),
-					track->midpoints[j + (times * 11) - 1].y);
+		if(convert_coords_to_pixel(&track->midpoints[i], veh.position,
+				track->pylons[i + track->index].x, track->pylons[i + track->index].y)) {
+			break;
 		}
 	}
+
+	// draw graphic
+	int8_t j;
+	for(j = i-1; j > 0; j--) {
+		GLIB_drawLine(&glibContext,
+				track->midpoints[j].x - (TRACK_PYLON_WIDTH / 2),
+				track->midpoints[j].y,
+				track->midpoints[j - 1].x - (TRACK_PYLON_WIDTH / 2),
+				track->midpoints[j - 1].y);
+
+		GLIB_drawLine(&glibContext,
+				track->midpoints[j].x + (TRACK_PYLON_WIDTH / 2),
+				track->midpoints[j].y,
+				track->midpoints[j - 1].x + (TRACK_PYLON_WIDTH / 2),
+				track->midpoints[j - 1].y);
+	}
+
 	return false;
 }
 
@@ -913,7 +909,6 @@ void bezierCurve(Waypoint_t midpoints[], Waypoint_t * new_points) {
 	for(u = 0.0 ; u <= 1.0 ; u += 0.1) {
 		xu = pow(1-u,3) * midpoints[0].x + 3 * u * pow(1-u,2) * midpoints[1].x + 3 * pow(u,2) * (1-u) * midpoints[2].x + pow(u,3) * midpoints[3].x;
 		yu = pow(1-u,3) * midpoints[0].y + 3 * u * pow(1-u,2) * midpoints[1].y + 3 * pow(u,2) * (1-u) * midpoints[2].y + pow(u,3) * midpoints[3].y;
-//		printf("X: %f\tY: %f\n", xu , yu);
 		new_points[i].x = (uint8_t)(xu + 0.5);
 		new_points[i].y = (uint8_t)(yu + 0.5);
 		i++;

@@ -20,7 +20,7 @@
 /* C O N F I G U R A T I O N   V A L U E S */
 
 /* D I S P L A Y */
-#define DISPLAY_REFRESH_RATE	25		// [Hz]
+#define DISPLAY_REFRESH_RATE	20		// [Hz]
 
 #define GLIB_FONT_WIDTH   (glibContext.font.fontWidth + glibContext.font.charSpacing)
 #define GLIB_FONT_HEIGHT  (glibContext.font.fontHeight)
@@ -46,7 +46,8 @@
 #define MONACO_STR				"Monaco"
 #define MELBOURNE_STR			"Melbourne, Aus."
 
-#define TRACK_PYLON_WIDTH		(MAX_X / 3)
+#define PYLON_DIVIDER			(2)
+#define TRACK_PYLON_WIDTH		(MAX_X / PYLON_DIVIDER)
 #define TRACK_PYLON_DISTANCE	(20)
 
 
@@ -114,11 +115,11 @@
 #define F1_TURN_RADIUS			13
 
 /* MAX POWER [W] */
-#define SEDAN_MAX_POWER			(211000.0 / 2.0)
-#define SUV_MAX_POWER			350000.0
-#define TRUCK_MAX_POWER			597000.0
-#define VAN_MAX_POWER			390000.0
-#define	F1_MAX_POWER			696000.0
+#define SEDAN_MAX_POWER			(211000.0 / 6.0)
+#define SUV_MAX_POWER			(350000.0 / 6.0)
+#define TRUCK_MAX_POWER			(597000.0 / 3.0)
+#define VAN_MAX_POWER			(390000.0 / 3.0)
+#define	F1_MAX_POWER			(696000.0 / 3.0)
 
 /* Cd DRAG COEFFICIENT VALUES */
 #define SEDAN_CD				0.23
@@ -238,11 +239,11 @@ typedef struct {
 	char name[20];
 	bool initialized;
 	uint16_t index;
-//	uint16_t meters_covered; // TODO
 	uint16_t num_waypoints;
 	uint32_t meters;		// how long the track is
 	Waypoint_t * waypoints;
-	Midpoint_Pixel_t midpoints[25];
+	Midpoint_Pixel_t midpoints[30];
+	Waypoint_t * pylons;
 } Track_t;
 
 // Vehicle-related

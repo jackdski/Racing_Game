@@ -23,6 +23,13 @@
 #include "semphr.h"
 #include "timers.h"
 
+
+#define HARD_LEFT_ANGLE		(2.0)
+#define LEFT_ANGLE			(1.0)
+#define RIGHT_ANGLE			(-1 * LEFT_ANGLE)
+#define HARD_RIGHT_ANGLE	(-1 * HARD_LEFT_ANGLE)
+
+
 /*	F U N C T I O N S   */
 void DirectionTask(void * pvParameters);
 void tmr_get_system_state(TimerHandle_t xTimer);

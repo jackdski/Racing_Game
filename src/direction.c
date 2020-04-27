@@ -35,10 +35,11 @@ static TimerHandle_t sys_state_timer;
 /*	T A S K   */
 
 void DirectionTask(void * pvParameters) {
-	const TickType_t delay_time = pdMS_TO_TICKS(200);
+	const TickType_t delay_time = pdMS_TO_TICKS(100);
 
 	static uint8_t capsense_pos;
 	eDirection direction = Straight;
+	eDirection old_direction = Straight;
 	int8_t angle;
 
 	sys_state_timer = xTimerCreate("sys state Timer", pdMS_TO_TICKS(400), pdTRUE, (void*)0, tmr_get_system_state);
@@ -83,17 +84,33 @@ void DirectionTask(void * pvParameters) {
 					xSemaphoreGive(mSpeedData);
 				}
 				switch(capsense_pos) {
-					case(1): direction = Hard_Left;  angle =  45.0; break;
-					case(2): direction = Left; 		 angle =  15.0; break;
-					case(3): direction = Right;		 angle = -15.0; break;
-					case(4): direction = Hard_Right; angle = -45.0; break;
-					default: direction = Straight; 	 angle =   0.0; break;
+					case(1): direction = Hard_Left;  angle =  HARD_LEFT_ANGLE; break;
+					case(2): direction = Left; 		 angle =  LEFT_ANGLE; break;
+					case(3): direction = Right;		 angle =  RIGHT_ANGLE; break;
+					case(4): direction = Hard_Right; angle =  HARD_RIGHT_ANGLE; break;
+					default: {
+						direction = Straight;
+						if(old_direction == Hard_Left) {
+							angle -= HARD_LEFT_ANGLE + (HARD_RIGHT_ANGLE * speed / 15);
+						}
+						else if(old_direction == Left ) {
+							angle -= LEFT_ANGLE + (HARD_RIGHT_ANGLE * speed / 15);
+						}
+						else if(old_direction == Right) {
+							angle -= RIGHT_ANGLE + (HARD_RIGHT_ANGLE * speed / 15);
+						}
+						else if(old_direction == Hard_Right ) {
+							angle -= HARD_RIGHT_ANGLE + (HARD_RIGHT_ANGLE * speed / 15);
+						}
+						break;
+					}
 				}
 
 				xSemaphoreTake(mDirectionData, 30);
 				Vehicle_Direction.direction = direction; 	// update global variable
-				if(speed > 0) {
-					Vehicle_Direction.angle += angle;
+				old_direction = direction;
+				if(speed > 0 && direction != Straight) {
+					Vehicle_Direction.angle += angle * 2;
 				}
 				if(Vehicle_Direction.angle > 360.0) {
 					Vehicle_Direction.angle -= 360.0;

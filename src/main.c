@@ -100,7 +100,7 @@ int main(void)
   xTaskCreate(DisplayTask, "LCD Display", 350, (void*)NULL, 1, &thLCDDisplay);
   xTaskCreate(SpeedTask, "Speed Task", 200, (void*)NULL, 2, NULL);
   xTaskCreate(DirectionTask, "Direction", 200, (void*)NULL, 2, NULL);
-  xTaskCreate(VehicleMonitorTask, "VehMonitor", 200, (void*)NULL, 1, &thVehMon);
+  xTaskCreate(VehicleMonitorTask, "VehMonitor", 250, (void*)NULL, 1, &thVehMon);
 
   /* Suspend Vehicle Monitor Task */
   vTaskSuspend(thVehMon);

@@ -22,7 +22,6 @@ extern SemaphoreHandle_t mSpeedData;
 extern SemaphoreHandle_t mDirectionData;
 extern SemaphoreHandle_t mSystemState;
 extern SemaphoreHandle_t mTrack;
-//extern SemaphoreHandle_t mAutopilotState;
 
 /*	T A S K   H A N D L E S   */
 TaskHandle_t thLEDTask;
@@ -52,33 +51,34 @@ void VehicleMonitorTask(void * pvParameters) {
 		// update waypoints
 		if(xSemaphoreTake(mTrack, 10)) {
 //			static bool calc_distance = false;
-//			static float distance = 0.0;
-//			static float distance_traveled = 0.0;
+			float distance_one = 0.0;
+			float distance_two = 0.0;
 			if(track.initialized) {
-//				if(!calc_distance) {
-//					distance = sqrt(length_square(track.waypoints[0].x, track.waypoints[0].y, track.waypoints[1].x, track.waypoints[1].y));
-//					calc_distance = true;
-//				}
-
 				if(xSemaphoreTake(mVehicleData, 10)) {
-//					if(vehicle.distance_covered > distance) {
-////					if(vehicle.shape.top_pos < track.midpoints[track.index].y)
-//						track.index++;
-//						calc_distance = false;
-//						vehicle.distance_covered = 0.0;
-//					}
-					// check if index needs to be increased
-//					if(track.midpoints[2].y > vehicle.shape.yMin) {
-//						track.index++;
-//					}
-					if(track.midpoints[1].y > 128) {
+					distance_one = sqrt(length_square(vehicle.position.x, vehicle.position.y, track.pylons[track.index].x, track.pylons[track.index].y));
+					distance_two = sqrt(length_square(vehicle.position.x, vehicle.position.y, track.pylons[track.index+1].x, track.pylons[track.index+1].y));
+
+					if(distance_two < distance_one) {
 						track.index++;
 					}
+					// check if index needs to be increased
+//					else if(track.midpoints[1].y > vehicle.shape.yMin) {
+//						track.index++;
+//					}
+//					else if(track.midpoints[2].y > vehicle.shape.yMin) {
+//						track.index++;
+//					}
+//					else if((track.midpoints[0].y > 126) && (distance_two < distance_one)) {
+//						track.index++;
+//					}
+//					else if(track.midpoints[1].y > 123) {
+//						track.index++;
+//					}
 
 					// check if off-road
 					uint8_t i;
-					for(i = 0; i < 6; i++) {
-						uint8_t width_adj = (128 / 3 / 2);
+					for(i = 0; i < 4; i++) {
+						uint8_t width_adj = (128 / PYLON_DIVIDER / 2);
 						int32_t xmax = track.midpoints[i].x + width_adj;
 						int32_t xmin = track.midpoints[i].x - width_adj;
 						if(vehicle.shape.xMax > xmax) {
